@@ -65,13 +65,29 @@ function getLocalIpAddress() {
   return '192.168.1.110';
 }
 
+app.enable('trust proxy');
+
 // ---------------- API ENDPOINTS ----------------
 
-// Sistem Bilgisi ve QR Kodu
+// Sistem Bilgisi ve QR Kodu (Render.com ve Yerel Ağ Uyumlu)
 app.get('/api/info', async (req, res) => {
   try {
-    const ip = getLocalIpAddress();
-    const garsonUrl = `http://${ip}:${PORT}/garson.html`;
+    const host = req.get('host') || 'localhost:3000';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+
+    let garsonUrl;
+    let ip;
+
+    if (isLocal) {
+      ip = getLocalIpAddress();
+      garsonUrl = `http://${ip}:${PORT}/garson.html`;
+    } else {
+      // Render.com veya bulut sunucu: Doğrudan render alan adını (https://...onrender.com/garson.html) kullan!
+      ip = host;
+      garsonUrl = `${proto}://${host}/garson.html`;
+    }
+
     const qrCodeDataUrl = await QRCode.toDataURL(garsonUrl, {
       width: 300,
       margin: 1,
@@ -83,6 +99,8 @@ app.get('/api/info', async (req, res) => {
 
     res.json({
       success: true,
+      isCloud: !isLocal,
+      host,
       ip,
       port: PORT,
       garsonUrl,

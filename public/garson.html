@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10,6 +12,7 @@
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" href="css/garson.css">
 </head>
+
 <body>
 
   <!-- Mobil Üst Bar -->
@@ -22,11 +25,10 @@
       <div class="waiter-selector-box">
         <span>👤</span>
         <select id="waiterSelect" class="waiter-select" onchange="onWaiterChange()">
-          <option value="Garson 1">Garson 1</option>
-          <option value="Garson 2">Garson 2</option>
           <option value="Yusuf">Yusuf</option>
+          <option value="Muhammed">Muhammed</option>
+          <option value="Mehmet Salih">Mehmet Salih</option>
           <option value="Ahmet">Ahmet</option>
-          <option value="Mehmet">Mehmet</option>
         </select>
       </div>
     </div>
@@ -40,7 +42,8 @@
           <div class="current-table-status" id="currentTableStatus">Dokunarak masa seçin ➜</div>
         </div>
       </div>
-      <button class="btn btn-outline" style="padding: 6px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); openTableAdisyon()">
+      <button class="btn btn-outline" style="padding: 6px 14px; font-size: 0.85rem;"
+        onclick="event.stopPropagation(); openTableAdisyon()">
         📋 Adisyon
       </button>
     </div>
@@ -82,9 +85,12 @@
 
       <!-- Salon / Bahçe Filtresi -->
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-        <button class="btn btn-primary" id="tabSalon" style="padding: 6px 14px; font-size: 0.85rem;" onclick="filterTableSection('Salon')">Salon</button>
-        <button class="btn btn-outline" id="tabBahce" style="padding: 6px 14px; font-size: 0.85rem;" onclick="filterTableSection('Bahçe')">Bahçe</button>
-        <button class="btn btn-outline" id="tabAll" style="padding: 6px 14px; font-size: 0.85rem;" onclick="filterTableSection('All')">Tümü</button>
+        <button class="btn btn-primary" id="tabSalon" style="padding: 6px 14px; font-size: 0.85rem;"
+          onclick="filterTableSection('Salon')">Salon</button>
+        <button class="btn btn-outline" id="tabBahce" style="padding: 6px 14px; font-size: 0.85rem;"
+          onclick="filterTableSection('Bahçe')">Bahçe</button>
+        <button class="btn btn-outline" id="tabAll" style="padding: 6px 14px; font-size: 0.85rem;"
+          onclick="filterTableSection('All')">Tümü</button>
       </div>
 
       <div class="tables-grid" id="tablesModalGrid">
@@ -106,13 +112,14 @@
 
       <!-- Hızlı Seçenekler / Notlar -->
       <div style="margin-top: 14px;">
-        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Hızlı Seçenekler (Örn: Açık, Şekerli):</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Hızlı Seçenekler (Örn: Açık,
+          Şekerli):</div>
         <div class="quick-notes-container" id="modalNotesChips">
           <!-- Dinamik Not Çipleri -->
         </div>
 
-        <input type="text" id="modalCustomNote" placeholder="Özel not ekleyin (İsteğe bağlı)..." 
-               style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem; outline: none;">
+        <input type="text" id="modalCustomNote" placeholder="Özel not ekleyin (İsteğe bağlı)..."
+          style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem; outline: none;">
       </div>
 
       <!-- Adet Kontrolü -->
@@ -123,7 +130,8 @@
       </div>
 
       <!-- Ekle Butonu -->
-      <button class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.1rem;" onclick="confirmAddToCart()">
+      <button class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.1rem;"
+        onclick="confirmAddToCart()">
         Sepete Ekle (<span id="modalItemTotalPrice">0 ₺</span>)
       </button>
     </div>
@@ -137,21 +145,25 @@
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeCartModal()">✕</button>
       </div>
 
-      <div style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-weight: 600; display: flex; justify-content: space-between;">
+      <div
+        style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-weight: 600; display: flex; justify-content: space-between;">
         <span>Seçili Masa: <strong id="cartTableName" style="color: var(--primary);">--</strong></span>
         <span>Garson: <strong id="cartWaiterName" style="color: #fff;">--</strong></span>
       </div>
 
-      <div id="cartItemsList" style="display: flex; flex-direction: column; gap: 10px; max-height: 40vh; overflow-y: auto; margin-bottom: 16px;">
+      <div id="cartItemsList"
+        style="display: flex; flex-direction: column; gap: 10px; max-height: 40vh; overflow-y: auto; margin-bottom: 16px;">
         <!-- Sepet Kalemleri -->
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 14px; margin-bottom: 16px;">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 14px; margin-bottom: 16px;">
         <span style="font-size: 1.1rem; font-weight: 600;">Toplam:</span>
         <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);" id="cartModalTotal">0.00 ₺</span>
       </div>
 
-      <button class="btn btn-success" style="width: 100%; padding: 16px; font-size: 1.2rem;" onclick="submitOrderToKitchen()">
+      <button class="btn btn-success" style="width: 100%; padding: 16px; font-size: 1.2rem;"
+        onclick="submitOrderToKitchen()">
         🚀 OCAĞA GÖNDER
       </button>
     </div>
@@ -167,11 +179,13 @@
 
       <h4 id="adisyonTableName" style="color: #fff; margin-bottom: 12px;">--</h4>
 
-      <div id="adisyonOrdersList" style="display: flex; flex-direction: column; gap: 12px; max-height: 50vh; overflow-y: auto; margin-bottom: 16px;">
+      <div id="adisyonOrdersList"
+        style="display: flex; flex-direction: column; gap: 12px; max-height: 50vh; overflow-y: auto; margin-bottom: 16px;">
         <!-- Adisyon Siparişleri -->
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 14px;">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 14px;">
         <span style="font-size: 1.1rem; font-weight: 600;">Masa Toplamı:</span>
         <span style="font-size: 1.6rem; font-weight: 800; color: #f87171;" id="adisyonTotalAmount">0.00 ₺</span>
       </div>
@@ -184,4 +198,5 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/garson.js"></script>
 </body>
+
 </html>

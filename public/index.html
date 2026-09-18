@@ -272,15 +272,21 @@
 
   <script>
     async function loadSystemInfo() {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const fallbackUrl = window.location.origin + '/garson.html';
+
       try {
         const res = await fetch('/api/info');
         const data = await res.json();
         if (data.success) {
-          document.getElementById('garsonUrlText').textContent = data.garsonUrl;
+          document.getElementById('garsonUrlText').textContent = isLocal ? data.garsonUrl : fallbackUrl;
           document.getElementById('qrImage').src = data.qrCode;
+        } else {
+          document.getElementById('garsonUrlText').textContent = fallbackUrl;
         }
       } catch (e) {
         console.error('Sistem bilgisi alınamadı:', e);
+        document.getElementById('garsonUrlText').textContent = fallbackUrl;
       }
     }
 

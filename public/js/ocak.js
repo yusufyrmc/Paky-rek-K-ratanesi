@@ -299,12 +299,15 @@ async function updateOrderStatus(orderId, newStatus) {
 
 // QR Kod Modalı
 async function openQrModal() {
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const liveGarsonUrl = isLocal ? null : (window.location.origin + '/garson.html');
+
   try {
     const res = await fetch('/api/info');
     const data = await res.json();
     if (data.success) {
       document.getElementById('modalQrImg').src = data.qrCode;
-      document.getElementById('modalGarsonUrl').textContent = data.garsonUrl;
+      document.getElementById('modalGarsonUrl').textContent = liveGarsonUrl || data.garsonUrl;
       document.getElementById('qrModal').classList.add('active');
     }
   } catch (e) {
@@ -334,7 +337,9 @@ setInterval(() => {
 
 // WebSocket Bağlantısı ve Olay Dinleyicileri
 function setupSocket() {
-  socket = io();
+  socket = io({
+    transports: ['websocket', 'polling']
+  });
 
   socket.on('connect', () => {
     console.log('[Ocak] Canlı soket bağlandı.');

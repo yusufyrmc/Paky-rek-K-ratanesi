@@ -447,7 +447,9 @@ function escapeHtml(text) {
 
 // WebSocket
 function setupSocket() {
-  socket = io();
+  socket = io({
+    transports: ['websocket', 'polling']
+  });
 
   socket.on('new_order', () => {
     loadTables();

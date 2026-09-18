@@ -563,7 +563,9 @@ function escapeHtml(text) {
 
 // WebSocket Bağlantısı
 function setupSocket() {
-  socket = io();
+  socket = io({
+    transports: ['websocket', 'polling']
+  });
 
   socket.on('connect', () => {
     console.log('[Garson] Canlı bağlantı sağlandı.');
