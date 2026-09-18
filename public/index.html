@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
       text-align: center;
       padding: 50px 20px 30px;
     }
+
     .logo-container {
       display: inline-flex;
       align-items: center;
@@ -23,6 +25,7 @@
       margin-bottom: 16px;
       box-shadow: var(--shadow-glow);
     }
+
     .title {
       font-size: 2.5rem;
       font-weight: 800;
@@ -31,6 +34,7 @@
       -webkit-text-fill-color: transparent;
       margin-bottom: 8px;
     }
+
     .subtitle {
       color: var(--primary);
       font-size: 1.1rem;
@@ -81,14 +85,22 @@
       box-shadow: var(--shadow-glow);
     }
 
-    .action-card.ocak::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
-    .action-card.garson::before { background: linear-gradient(90deg, #10b981, #3b82f6); }
-    .action-card.kasa::before { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+    .action-card.ocak::before {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+    }
+
+    .action-card.garson::before {
+      background: linear-gradient(90deg, #10b981, #3b82f6);
+    }
+
+    .action-card.kasa::before {
+      background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    }
 
     .card-icon {
       font-size: 3.5rem;
       margin-bottom: 16px;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
     }
 
     .card-title {
@@ -159,7 +171,7 @@
       background: #ffffff;
       padding: 14px;
       border-radius: var(--radius-md);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -182,24 +194,25 @@
     }
   </style>
 </head>
+
 <body>
 
   <div class="hero">
     <div class="logo-container">☕</div>
     <h1 class="title">PAKYÜREK KIRAATHANESİ</h1>
-    <div class="subtitle">Gerçek Zamanlı Garson & Ocak Sistemi</div>
   </div>
 
   <div class="container">
     <!-- 3 Ana Panel Kartı -->
     <div class="grid-panels">
-      
+
       <!-- Ocak Ekranı -->
       <a href="ocak.html" class="glass-panel action-card ocak">
         <div class="card-icon">🫖</div>
-        <h2 class="card-title">Ocak / Mutfak Ekranı</h2>
+        <h2 class="card-title">Ocak Ekranı</h2>
         <p class="card-desc">
-          Ocak başındaki bilgisayar veya tablet için. Garsonların girdiği tüm çay, kahve ve tost siparişleri anında sesli ikazla ve süre sayaçlarıyla bu ekrana düşer.
+          Ocak başındaki bilgisayar veya tablet için. Garsonların girdiği tüm çay, kahve ve tost siparişleri anında
+          sesli ikazla ve süre sayaçlarıyla bu ekrana düşer.
         </p>
         <button class="btn btn-primary" style="width: 100%;">
           Ocak Ekranını Aç ➜
@@ -211,7 +224,8 @@
         <div class="card-icon">📱</div>
         <h2 class="card-title">Garson Mobil Ekranı</h2>
         <p class="card-desc">
-          Garsonların cep telefonundan kullandığı ekran. Masa seçimi, tek tıkla açık/koyu/şekerli notları, hızlı sipariş gönderme ve masa adisyon takibi.
+          Garsonların cep telefonundan kullandığı ekran. Masa seçimi, tek tıkla açık/koyu/şekerli notları, hızlı sipariş
+          gönderme ve masa adisyon takibi.
         </p>
         <button class="btn btn-success" style="width: 100%;">
           Garson Ekranını Aç ➜
@@ -223,7 +237,8 @@
         <div class="card-icon">💼</div>
         <h2 class="card-title">Kasa & Yönetim Paneli</h2>
         <p class="card-desc">
-          Masa hesaplarını kapatma (Nakit / Kredi Kartı), günlük ciro, satılan çay-kahve adetleri raporu ve menü fiyatlarını güncelleme ekranı.
+          Masa hesaplarını kapatma (Nakit / Kredi Kartı), günlük ciro, satılan çay-kahve adetleri raporu ve menü
+          fiyatlarını güncelleme ekranı.
         </p>
         <button class="btn btn-info" style="width: 100%;">
           Kasa Paneline Git ➜
@@ -237,11 +252,14 @@
       <div class="qr-info">
         <h3>📲 Garsonlar Nasıl Bağlanacak?</h3>
         <p>
-          Garsonların telefonunun kahvehanenin <strong>aynı Wi-Fi ağına</strong> bağlı olması yeterlidir. Telefonlarının kamerasını yandaki <strong>QR Koda</strong> tutarak anında sipariş ekranını açabilirler (Şifre veya yükleme gerekmez).
+          Garsonların telefonunun kahvehanenin <strong>aynı Wi-Fi ağına</strong> bağlı olması yeterlidir. Telefonlarının
+          kamerasını yandaki <strong>QR Koda</strong> tutarak anında sipariş ekranını açabilirler (Şifre veya yükleme
+          gerekmez).
         </p>
         <div class="url-box">
           <span id="garsonUrlText">Yükleniyor...</span>
-          <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem;" onclick="copyUrl()">Kopyala</button>
+          <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem;"
+            onclick="copyUrl()">Kopyala</button>
         </div>
       </div>
 
@@ -276,4 +294,5 @@
     loadSystemInfo();
   </script>
 </body>
+
 </html>
