@@ -97,7 +97,7 @@ function selectCategory(catId) {
   renderProducts();
 }
 
-// Ürünleri Render Et
+// Ürünleri Render Et (Hızlı Ekleme ve Not Butonlu)
 function renderProducts() {
   const container = document.getElementById('productsContainer');
   let products = [];
@@ -116,15 +116,60 @@ function renderProducts() {
     return;
   }
 
-  container.innerHTML = products.map(prod => `
-    <div class="product-card" onclick="openProductOptions(${prod.id})">
-      <div class="product-card-top">
-        <div class="product-title">${escapeHtml(prod.name)}</div>
-        <div class="product-price">${prod.price.toFixed(2)} ₺</div>
+  container.innerHTML = products.map(prod => {
+    // Sepette bu üründen kaç adet var?
+    const inCartQty = cart
+      .filter(item => item.product_id === prod.id)
+      .reduce((sum, item) => sum + item.quantity, 0);
+
+    return `
+      <div class="product-card" id="prod-card-${prod.id}">
+        ${inCartQty > 0 ? `<div class="product-cart-badge">${inCartQty}</div>` : ''}
+        
+        <div class="product-card-top" onclick="quickDirectAdd(${prod.id})">
+          <div class="product-title">${escapeHtml(prod.name)}</div>
+          <div class="product-price">${prod.price.toFixed(2)} ₺</div>
+        </div>
+
+        <div class="card-quick-actions">
+          <button class="btn-quick-add" onclick="quickDirectAdd(${prod.id})" title="Hızlı 1 Adet Ekle">
+            + Ekle
+          </button>
+          <button class="btn-quick-option" onclick="openProductOptions(${prod.id})" title="Özel Not / Seçenek">
+            ⚙️ Not
+          </button>
+        </div>
       </div>
-      <div class="product-add-badge">+</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
+}
+
+// Tek Dokunuşla Doğrudan Sepete Ekleme (Modal Beklemeden!)
+function quickDirectAdd(prodId) {
+  let prod = null;
+  for (const cat of menuData) {
+    const found = cat.products.find(p => p.id === prodId);
+    if (found) { prod = found; break; }
+  }
+  if (!prod) return;
+
+  const existingIndex = cart.findIndex(item => item.product_id === prod.id && (!item.note || item.note === ''));
+  if (existingIndex !== -1) {
+    cart[existingIndex].quantity += 1;
+  } else {
+    cart.push({
+      product_id: prod.id,
+      product_name: prod.name,
+      unit_price: prod.price,
+      quantity: 1,
+      note: ''
+    });
+  }
+
+  if (navigator.vibrate) navigator.vibrate(30);
+  updateCartUI();
+  renderProducts();
+  showToast(`+1 ${prod.name} eklendi`, 'info');
 }
 
 // Ürün Hızlı Not & Adet Modalı
@@ -217,6 +262,7 @@ function confirmAddToCart() {
   if (navigator.vibrate) navigator.vibrate(40);
 
   updateCartUI();
+  renderProducts();
   closeOptionsModal();
   showToast(`${modalQuantity}x ${selectedProduct.name} sepete eklendi`, 'success');
 }
@@ -228,14 +274,36 @@ function updateCartUI() {
 
   const cartCountText = document.getElementById('cartCountText');
   const cartTotalText = document.getElementById('cartTotalText');
+  const btnSend = document.getElementById('btnSendOrder');
 
   if (totalQty === 0) {
     cartCountText.textContent = 'Sepet Boş';
     cartTotalText.textContent = '0.00 ₺';
+    btnSend.innerHTML = `Siparişi Gönder ➜`;
+    btnSend.style.opacity = '0.6';
   } else {
-    cartCountText.textContent = `${totalQty} Ürün Eklendi`;
+    cartCountText.textContent = `${totalQty} Ürün (Detay için tıkla)`;
     cartTotalText.textContent = `${totalPrice.toFixed(2)} ₺`;
+    btnSend.innerHTML = `🚀 Ocağa Gönder (${totalQty})`;
+    btnSend.style.opacity = '1';
   }
+}
+
+// Hızlı Ocağa Gönder Butonu Tıklanması
+function onFastSendClick() {
+  if (!selectedTable) {
+    showToast('Lütfen önce bir masa seçin!', 'warning');
+    openTableModal();
+    return;
+  }
+
+  if (cart.length === 0) {
+    showToast('Sepetiniz boş. Ürün ekleyin.', 'warning');
+    return;
+  }
+
+  // Tek dokunuşla hemen ocağa gönder!
+  submitOrderToKitchen();
 }
 
 // Sepet Modalı Aç / Kapat
@@ -300,6 +368,7 @@ function changeCartItemQty(index, delta) {
     renderCartItemsList();
   }
   updateCartUI();
+  renderProducts();
 }
 
 function removeCartItem(index) {
@@ -310,6 +379,7 @@ function removeCartItem(index) {
     renderCartItemsList();
   }
   updateCartUI();
+  renderProducts();
 }
 
 // SİPARİŞİ OCAĞA GÖNDER!
