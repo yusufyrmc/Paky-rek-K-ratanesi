@@ -51,17 +51,14 @@
   <!-- Filtreler ve Kontroller -->
   <div class="ocak-controls">
     <div class="filter-tabs">
-      <button class="filter-btn active" onclick="setFilter('active')">
-        Tüm Aktifler <span class="count-tag" id="countActive">0</span>
+      <button class="filter-btn active" onclick="setFilter('pending')">
+        🔔 Bekleyen Siparişler <span class="count-tag" id="countPending">0</span>
       </button>
-      <button class="filter-btn" onclick="setFilter('pending')">
-        Bekleyenler <span class="count-tag" id="countPending">0</span>
+      <button class="filter-btn" onclick="setFilter('approved')">
+        ✓ Onaylananlar <span class="count-tag" id="countApproved">0</span>
       </button>
-      <button class="filter-btn" onclick="setFilter('preparing')">
-        Hazırlananlar <span class="count-tag" id="countPreparing">0</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('ready')">
-        Son Çıkanlar <span class="count-tag" id="countReady">0</span>
+      <button class="filter-btn" onclick="setFilter('all')">
+        Tümü <span class="count-tag" id="countAll">0</span>
       </button>
     </div>
 

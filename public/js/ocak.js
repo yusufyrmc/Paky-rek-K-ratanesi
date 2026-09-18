@@ -159,17 +159,21 @@ function setFilter(filter) {
   renderOrders();
 }
 
+let currentFilter = 'pending'; // 'pending', 'approved', 'all'
+
 // Sayaçları Güncelle
 function updateCounts() {
   const pending = allOrders.filter(o => o.status === 'pending').length;
-  const preparing = allOrders.filter(o => o.status === 'preparing').length;
-  const ready = allOrders.filter(o => o.status === 'ready').length;
-  const active = pending + preparing;
+  const approved = allOrders.filter(o => o.status === 'approved' || o.status === 'ready').length;
+  const total = allOrders.length;
 
-  document.getElementById('countActive').textContent = active;
-  document.getElementById('countPending').textContent = pending;
-  document.getElementById('countPreparing').textContent = preparing;
-  document.getElementById('countReady').textContent = ready;
+  const countPending = document.getElementById('countPending');
+  const countApproved = document.getElementById('countApproved');
+  const countAll = document.getElementById('countAll');
+
+  if (countPending) countPending.textContent = pending;
+  if (countApproved) countApproved.textContent = approved;
+  if (countAll) countAll.textContent = total;
 }
 
 // Sipariş Kartlarını Render Etme
@@ -178,22 +182,20 @@ function renderOrders() {
   const container = document.getElementById('ordersContainer');
 
   let filtered = [];
-  if (currentFilter === 'active') {
-    filtered = allOrders.filter(o => o.status === 'pending' || o.status === 'preparing');
-  } else if (currentFilter === 'pending') {
+  if (currentFilter === 'pending') {
     filtered = allOrders.filter(o => o.status === 'pending');
-  } else if (currentFilter === 'preparing') {
-    filtered = allOrders.filter(o => o.status === 'preparing');
-  } else if (currentFilter === 'ready') {
-    filtered = allOrders.filter(o => o.status === 'ready');
+  } else if (currentFilter === 'approved') {
+    filtered = allOrders.filter(o => o.status === 'approved' || o.status === 'ready');
+  } else {
+    filtered = allOrders;
   }
 
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-orders">
         <div class="empty-icon">☕</div>
-        <h3>Bu Filtrede Sipariş Yok</h3>
-        <p>${currentFilter === 'ready' ? 'Hazır bekleyen sipariş bulunmuyor.' : 'Ocak tertemiz! Yeni sipariş bekleniyor.'}</p>
+        <h3>${currentFilter === 'pending' ? 'Bekleyen Sipariş Yok' : 'Kayıt Bulunmuyor'}</h3>
+        <p>${currentFilter === 'pending' ? 'Ocak tertemiz! Yeni sipariş geldiğinde sesle düşecektir.' : 'Bu filtrede sipariş yok.'}</p>
       </div>
     `;
     return;
@@ -217,26 +219,19 @@ function renderOrders() {
       </div>
     `).join('');
 
+    const isApproved = order.status === 'approved' || order.status === 'ready';
+
     let actionButtons = '';
-    if (order.status === 'pending') {
+    if (!isApproved) {
       actionButtons = `
-        <button class="btn btn-info btn-status" onclick="updateOrderStatus(${order.id}, 'preparing')">
-          ⚙️ Hazırlanıyor
-        </button>
-        <button class="btn btn-success btn-status" onclick="updateOrderStatus(${order.id}, 'ready')">
-          ✓ HAZIR (Çıktı)
+        <button class="btn btn-success" style="width: 100%; padding: 14px; font-size: 1.15rem; font-weight: 800; letter-spacing: 0.03em;" onclick="approveOrder(${order.id}, '${escapeHtml(order.table_name)}')">
+          ✓ SİPARİŞİ ONAYLA
         </button>
       `;
-    } else if (order.status === 'preparing') {
+    } else {
       actionButtons = `
-        <button class="btn btn-success btn-status" style="width:100%; font-size:1.15rem;" onclick="updateOrderStatus(${order.id}, 'ready')">
-          ✓ HAZIR (Çıktı)
-        </button>
-      `;
-    } else if (order.status === 'ready') {
-      actionButtons = `
-        <button class="btn btn-outline btn-status" style="width:100%; border-color: var(--status-ready); color: var(--status-ready);" onclick="updateOrderStatus(${order.id}, 'completed')">
-          Tamamlandı Olarak Arşivle ✓
+        <button class="btn btn-outline" style="width: 100%; border-color: #10b981; color: #10b981; font-weight: 700; padding: 10px;" onclick="updateOrderStatus(${order.id}, 'pending')">
+          ✓ Onaylandı (Geri Al)
         </button>
       `;
     }
@@ -265,6 +260,12 @@ function renderOrders() {
       </div>
     `;
   }).join('');
+}
+
+// Direkt Onaylama Fonksiyonu
+async function approveOrder(orderId, tableName) {
+  await updateOrderStatus(orderId, 'approved');
+  showToast(`✓ ${tableName || 'Masa'} siparişi onaylandı!`, 'success');
 }
 
 // Durum Güncelle

@@ -60,9 +60,14 @@
             <span style="font-size: 0.85rem; color: var(--text-secondary);" id="receiptTableStatus">Detayları görmek için masaya tıklayın</span>
           </div>
 
-          <button class="btn btn-outline" id="btnTransferTable" style="padding: 6px 12px; font-size: 0.85rem; display: none;" onclick="openTransferModal()">
-            🔀 Masayı Aktar
-          </button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-outline" id="btnRenameTable" style="padding: 6px 12px; font-size: 0.85rem; display: none;" onclick="openRenameModal()">
+              ✏️ İsim/No Değiştir
+            </button>
+            <button class="btn btn-outline" id="btnTransferTable" style="padding: 6px 12px; font-size: 0.85rem; display: none;" onclick="openTransferModal()">
+              🔀 Masayı Aktar
+            </button>
+          </div>
         </div>
 
         <div class="receipt-items" id="receiptItemsList">
@@ -172,6 +177,21 @@
     </div>
   </div>
 
+  <!-- Masa İsim / Numara Değiştir Modalı -->
+  <div class="modal-overlay" id="renameModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary);">✏️ Masa İsim / Numarasını Düzenle</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeRenameModal()">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <label>Masa Adı veya Numarası (Örn: 5, Masa 5, Kral Masası, Köşe):</label>
+        <input type="text" id="renameTableInput" placeholder="Masa Adı / Numarası..." style="padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1.1rem; font-weight: 700;">
+        <button class="btn btn-success" style="margin-top: 10px; padding: 12px;" onclick="saveRenameTable()">İsmi / Numarayı Kaydet</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Masa Ekle Modalı -->
   <div class="modal-overlay" id="addTableModal">
     <div class="modal-content">
@@ -180,8 +200,8 @@
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeAddTableModal()">✕</button>
       </div>
       <div style="display: flex; flex-direction: column; gap: 12px;">
-        <label>Masa Adı (Örn: Masa 16 veya Bahçe 11):</label>
-        <input type="text" id="newTableName" placeholder="Masa Adı..." style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+        <label>Masa Adı veya Numarası (Örn: 16, Masa 16, Bahçe 11, Loca):</label>
+        <input type="text" id="newTableName" placeholder="Masa Adı / Numarası..." style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
         <label>Bölüm:</label>
         <select id="newTableSection" style="padding: 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
           <option value="Salon">Salon</option>

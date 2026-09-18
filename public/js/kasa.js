@@ -62,9 +62,14 @@ function renderTablesGrid() {
 
     return `
       <div class="kasa-table-card ${isOccupied ? 'occupied' : 'empty'} ${isSelected ? 'active-selected' : ''}" onclick="selectKasaTableById(${t.id})">
-        <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">${escapeHtml(t.name)}</div>
-        <div class="amount-tag">${isOccupied ? `${t.current_total.toFixed(2)} ₺` : 'Boş'}</div>
-        ${t.pending_order_count > 0 ? `<span class="badge badge-pending" style="font-size: 0.7rem;">${t.pending_order_count} Ocakta</span>` : ''}
+        <div style="display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%;">
+          <span style="font-size: 1.15rem; font-weight: 800; color: #fff;">${escapeHtml(t.name)}</span>
+          <span style="font-size: 0.8rem; cursor: pointer; opacity: 0.7;" onclick="event.stopPropagation(); quickRenameTable(${t.id}, '${escapeHtml(t.name)}')" title="İsim / No Değiştir">✏️</span>
+        </div>
+        <div class="amount-tag" style="${isOccupied ? 'color: #ef4444; font-size: 1.25rem; font-weight: 800;' : 'color: var(--text-muted); font-size: 0.85rem;'}">
+          ${isOccupied ? `${t.current_total.toFixed(2)} ₺` : '0.00 ₺ (Boş)'}
+        </div>
+        ${t.pending_order_count > 0 ? `<span class="badge badge-pending" style="font-size: 0.7rem;">${t.pending_order_count} Yeni Sipariş</span>` : ''}
       </div>
     `;
   }).join('');
@@ -81,6 +86,7 @@ async function selectKasaTable(table) {
   renderTablesGrid();
 
   document.getElementById('receiptTableName').textContent = table.name;
+  document.getElementById('btnRenameTable').style.display = 'inline-flex';
   document.getElementById('btnTransferTable').style.display = (table.status === 'occupied' || table.current_total > 0) ? 'inline-flex' : 'none';
 
   try {
@@ -106,7 +112,7 @@ function renderReceiptDetails(data) {
     return;
   }
 
-  statusLabel.textContent = `${data.orders.length} Adet Sipariş Kaydı`;
+  statusLabel.textContent = `${data.orders.length} Adet Sipariş Kaydı (Ödenene kadar masada kalır)`;
   actions.style.display = 'flex';
   document.getElementById('receiptTotalAmount').textContent = `${data.total.toFixed(2)} ₺`;
 
@@ -123,18 +129,73 @@ function renderReceiptDetails(data) {
     });
   });
 
-  list.innerHTML = allItems.map(item => `
-    <div class="receipt-row">
-      <div style="flex: 1;">
-        <span style="font-weight: 700; color: #fff;">${item.quantity}x ${escapeHtml(item.product_name)}</span>
-        ${item.note ? `<span style="font-size: 0.8rem; color: #fde047; margin-left: 6px;">[${escapeHtml(item.note)}]</span>` : ''}
-        <div style="font-size: 0.75rem; color: var(--text-secondary);">Garson: ${escapeHtml(item.waiter)}</div>
+  list.innerHTML = allItems.map(item => {
+    const isApproved = item.orderStatus === 'approved' || item.orderStatus === 'ready';
+    return `
+      <div class="receipt-row">
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 700; color: #fff;">${item.quantity}x ${escapeHtml(item.product_name)}</span>
+            ${isApproved 
+              ? `<span style="font-size: 0.7rem; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; font-weight: 700;">✓ Ocak Onayladı</span>` 
+              : `<span style="font-size: 0.7rem; background: rgba(245,158,11,0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: 700;">⏳ Ocakta Bekliyor</span>`}
+          </div>
+          ${item.note ? `<div style="font-size: 0.8rem; color: #fde047; margin-top: 2px;">[${escapeHtml(item.note)}]</div>` : ''}
+          <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">Garson: ${escapeHtml(item.waiter)} | ${item.unit_price.toFixed(2)} ₺ x ${item.quantity}</div>
+        </div>
+        <div style="font-weight: 800; color: var(--primary); font-size: 1.15rem;">
+          ${(item.quantity * item.unit_price).toFixed(2)} ₺
+        </div>
       </div>
-      <div style="font-weight: 700; color: var(--primary);">
-        ${(item.quantity * item.unit_price).toFixed(2)} ₺
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
+}
+
+// Masa İsim / Numara Değiştirme Fonksiyonları
+function openRenameModal() {
+  if (!selectedTable) return;
+  document.getElementById('renameTableInput').value = selectedTable.name;
+  document.getElementById('renameModal').classList.add('active');
+  document.getElementById('renameTableInput').focus();
+}
+
+function quickRenameTable(id, currentName) {
+  const table = allTables.find(t => t.id === id);
+  if (table) selectedTable = table;
+  document.getElementById('renameTableInput').value = currentName;
+  document.getElementById('renameModal').classList.add('active');
+  document.getElementById('renameTableInput').focus();
+}
+
+function closeRenameModal() {
+  document.getElementById('renameModal').classList.remove('active');
+}
+
+async function saveRenameTable() {
+  if (!selectedTable) return;
+  const newName = document.getElementById('renameTableInput').value.trim();
+  if (!newName) {
+    showToast('Lütfen masa adı veya numarası girin!', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/tables/${selectedTable.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Masa adı "${newName}" olarak güncellendi!`, 'success');
+      closeRenameModal();
+      loadTables();
+    } else {
+      showToast('Güncellenemedi: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası', 'danger');
+  }
 }
 
 function deselectTable() {

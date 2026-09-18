@@ -571,11 +571,11 @@ function setupSocket() {
     console.log('[Garson] Canlı bağlantı sağlandı.');
   });
 
-  // Ocakçı siparişi "HAZIR" yaptıysa telefona uyarı düşsün!
+  // Ocakçı siparişi "ONAYLADI"ysa telefona uyarı düşsün!
   socket.on('order_status_updated', (data) => {
-    if (data.status === 'ready' && data.order) {
-      if (navigator.vibrate) navigator.vibrate([100, 100, 100]);
-      showToast(`🔔 ${data.order.table_name} siparişi HAZIR! Ocağın tezgahından alabilirsiniz.`, 'success');
+    if ((data.status === 'approved' || data.status === 'ready') && data.order) {
+      if (navigator.vibrate) navigator.vibrate([100, 80, 100]);
+      showToast(`✓ ${data.order.table_name} siparişi ocak tarafından ONAYLANDI!`, 'success');
     }
     loadTables();
   });

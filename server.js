@@ -148,6 +148,24 @@ app.post('/api/tables', async (req, res) => {
   }
 });
 
+// Masa Adı / Numarası Güncelle
+app.put('/api/tables/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, section } = req.body;
+    if (!name) return res.status(400).json({ success: false, error: 'Masa adı veya numarası zorunludur' });
+
+    await run('UPDATE tables SET name = ?, section = COALESCE(?, section) WHERE id = ?', [name, section || null, id]);
+    // Açık siparişlerdeki masa adını da güncelle
+    await run("UPDATE orders SET table_name = ? WHERE table_id = ? AND status != 'completed' AND status != 'cancelled'", [name, id]);
+
+    io.emit('tables_changed');
+    res.json({ success: true, message: 'Masa adı güncellendi' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Masa Sil
 app.delete('/api/tables/:id', async (req, res) => {
   try {
@@ -233,12 +251,13 @@ app.get('/api/orders/active', async (req, res) => {
   try {
     const orders = await all(`
       SELECT * FROM orders 
-      WHERE status IN ('pending', 'preparing', 'ready')
+      WHERE status IN ('pending', 'preparing', 'ready', 'approved')
       ORDER BY 
         CASE status 
           WHEN 'pending' THEN 1 
           WHEN 'preparing' THEN 2 
           WHEN 'ready' THEN 3 
+          WHEN 'approved' THEN 4
         END,
         created_at ASC
     `);
@@ -311,7 +330,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['pending', 'preparing', 'ready', 'completed', 'cancelled'].includes(status)) {
+    if (!['pending', 'preparing', 'ready', 'approved', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({ success: false, error: 'Geçersiz durum' });
     }
 
