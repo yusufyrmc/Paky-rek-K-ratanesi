@@ -1,0 +1,16 @@
+{
+  "name": "pakyurek-kiraathanesi-siparis",
+  "version": "1.0.0",
+  "description": "Pakyürek Kıraathanesi Gerçek Zamanlı Garson & Ocak Sipariş Sistemi",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "qrcode": "^1.5.3",
+    "socket.io": "^4.7.5",
+    "sqlite3": "^5.1.7"
+  }
+}

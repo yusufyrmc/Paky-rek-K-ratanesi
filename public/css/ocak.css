@@ -1,0 +1,342 @@
+/* Ocak Ekranı Özel Stilleri */
+.ocak-header {
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid var(--border-color);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 10px #10b981; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.clock-section {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Filtre ve İstatistik Çubuğu */
+.ocak-controls {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filter-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  gap: 4px;
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: #0b0f19;
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+.filter-btn .count-tag {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+}
+
+/* Ses Etkinleştirme Uyarısı */
+.audio-prompt {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  color: #000;
+  font-weight: 700;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  animation: pulseBanner 2s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@keyframes pulseBanner {
+  0% { opacity: 0.9; }
+  50% { opacity: 1; filter: brightness(1.1); }
+  100% { opacity: 0.9; }
+}
+
+/* Sipariş Kartları Izgarası */
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  padding: 10px 24px 60px;
+}
+
+.order-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  animation: cardAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+@keyframes cardAppear {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Durum Kenarlıkları */
+.order-card.pending {
+  border-color: var(--status-pending);
+}
+.order-card.preparing {
+  border-color: var(--status-preparing);
+}
+.order-card.ready {
+  border-color: var(--status-ready);
+  opacity: 0.85;
+}
+
+/* Geciken Siparişler için Nabız */
+.order-card.urgent {
+  border-color: var(--status-danger) !important;
+  animation: urgentPulse 1.8s infinite;
+}
+
+@keyframes urgentPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.order-card-header {
+  padding: 16px 18px;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-badge {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.waiter-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.time-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.time-ago {
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.time-ago.warning {
+  background: rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+}
+
+.time-ago.danger {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.order-items-list {
+  padding: 16px 18px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.order-item-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.item-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.item-qty {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--primary);
+  min-width: 32px;
+  height: 32px;
+  background: rgba(245, 158, 11, 0.15);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.item-note {
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(234, 179, 8, 0.15);
+  color: #fde047;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #eab308;
+  display: inline-block;
+  max-width: fit-content;
+}
+
+.order-card-footer {
+  padding: 14px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 10px;
+}
+
+.btn-status {
+  flex: 1;
+  padding: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* Boş Durum */
+.empty-orders {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-orders .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-orders h3 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}

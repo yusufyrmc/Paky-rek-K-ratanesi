@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ocak / Mutfak Ekranı - Pakyürek Kıraathanesi</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/ocak.css">
+</head>
+<body>
+
+  <!-- Ses Etkinleştirme Çubuğu (Tarayıcı otomatik ses engelini aşmak için) -->
+  <div id="audioUnlockBanner" class="audio-prompt" onclick="unlockAudio()">
+    🔔 Siparişlerde sesli çanın çalması için lütfen buraya dokunun / tıklayın.
+  </div>
+
+  <!-- Üst Bar -->
+  <header class="ocak-header">
+    <div class="brand-section">
+      <div class="brand-title">
+        <span>🫖</span> PAKYÜREK OCAK
+      </div>
+      <div class="live-indicator">
+        <span class="live-dot"></span> Canlı Bağlantı
+      </div>
+    </div>
+
+    <div class="clock-section" id="liveClock">
+      --:--:--
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-outline" id="soundToggleBtn" onclick="toggleSound()">
+        <span id="soundIcon">🔔</span> <span id="soundText">Ses Açık</span>
+      </button>
+
+      <button class="btn btn-outline" onclick="openQrModal()">
+        📱 Garson QR Kod
+      </button>
+
+      <button class="btn btn-outline" onclick="toggleFullScreen()" title="Tam Ekran">
+        ⛶
+      </button>
+
+      <a href="index.html" class="btn btn-outline" title="Ana Menü">
+        🏠
+      </a>
+    </div>
+  </header>
+
+  <!-- Filtreler ve Kontroller -->
+  <div class="ocak-controls">
+    <div class="filter-tabs">
+      <button class="filter-btn active" onclick="setFilter('active')">
+        Tüm Aktifler <span class="count-tag" id="countActive">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('pending')">
+        Bekleyenler <span class="count-tag" id="countPending">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('preparing')">
+        Hazırlananlar <span class="count-tag" id="countPreparing">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('ready')">
+        Son Çıkanlar <span class="count-tag" id="countReady">0</span>
+      </button>
+    </div>
+
+    <div style="color: var(--text-secondary); font-size: 0.9rem;">
+      Ocak Ekranı | Her yeni siparişte sesli uyarı verilir
+    </div>
+  </div>
+
+  <!-- Sipariş Kartları Alanı -->
+  <main class="orders-grid" id="ordersContainer">
+    <!-- Dinamik Sipariş Kartları Buraya Gelecek -->
+    <div class="empty-orders">
+      <div class="empty-icon">☕</div>
+      <h3>Henüz Aktif Sipariş Yok</h3>
+      <p>Garson telefondan sipariş girdiği anda burada belirecektir.</p>
+    </div>
+  </main>
+
+  <!-- QR Kod Modal -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="modal-content" style="text-align: center;">
+      <h3 style="margin-bottom: 12px; color: var(--primary);">📲 Garson Mobil Girişi</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95rem;">
+        Garson telefonunun kamerasını bu QR koda tutarak sisteme anında bağlanabilir.
+      </p>
+      <div style="background: white; padding: 16px; border-radius: 12px; display: inline-block; margin-bottom: 16px;">
+        <img id="modalQrImg" src="" style="width: 220px; height: 220px; display: block;" alt="Garson QR">
+      </div>
+      <div style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; color: var(--text-primary); margin-bottom: 20px; font-size: 0.9rem;" id="modalGarsonUrl">
+        --
+      </div>
+      <button class="btn btn-primary" style="width: 100%;" onclick="closeQrModal()">Kapat</button>
+    </div>
+  </div>
+
+  <!-- Toast Bildirimleri -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Socket.io İstemcisi ve Mantık Kodu -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/ocak.js"></script>
+</body>
+</html>

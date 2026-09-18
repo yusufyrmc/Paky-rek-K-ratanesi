@@ -1,0 +1,21 @@
+# Bağımlılıklar
+node_modules/
+
+# Veritabanı dosyaları (yerel test verileri)
+*.db
+*.sqlite
+*.sqlite3
+
+# Loglar ve geçici dosyalar
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# İşletim sistemi dosyaları
+.DS_Store
+Thumbs.db
+
+# Ortam değişkenleri
+.env
+.env.local

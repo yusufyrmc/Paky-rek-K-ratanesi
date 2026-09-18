@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pakyürek Kıraathanesi - Sipariş & Otomasyon Sistemi</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .hero {
+      text-align: center;
+      padding: 50px 20px 30px;
+    }
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-lg);
+      font-size: 2.8rem;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-glow);
+    }
+    .title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: var(--primary);
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    .grid-panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .action-card {
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+    }
+
+    .action-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--border-color);
+      transition: all 0.3s;
+    }
+
+    .action-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .action-card.ocak::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .action-card.garson::before { background: linear-gradient(90deg, #10b981, #3b82f6); }
+    .action-card.kasa::before { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+
+    .card-icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+    }
+
+    .card-title {
+      font-size: 1.6rem;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .card-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+      flex-grow: 1;
+    }
+
+    /* QR Kod Alanı */
+    .qr-section {
+      background: linear-gradient(145deg, rgba(22, 30, 46, 0.95), rgba(15, 23, 42, 0.9));
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      box-shadow: var(--shadow-md);
+      flex-wrap: wrap;
+    }
+
+    .qr-info {
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .qr-info h3 {
+      font-size: 1.8rem;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qr-info p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .url-box {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      font-family: monospace;
+      font-size: 1.1rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      word-break: break-all;
+    }
+
+    .qr-code-box {
+      background: #ffffff;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .qr-code-box img {
+      width: 190px;
+      height: 190px;
+      display: block;
+    }
+
+    .qr-code-box span {
+      color: #0b0f19;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="logo-container">☕</div>
+    <h1 class="title">PAKYÜREK KIRAATHANESİ</h1>
+    <div class="subtitle">Gerçek Zamanlı Garson & Ocak Sistemi</div>
+  </div>
+
+  <div class="container">
+    <!-- 3 Ana Panel Kartı -->
+    <div class="grid-panels">
+      
+      <!-- Ocak Ekranı -->
+      <a href="ocak.html" class="glass-panel action-card ocak">
+        <div class="card-icon">🫖</div>
+        <h2 class="card-title">Ocak / Mutfak Ekranı</h2>
+        <p class="card-desc">
+          Ocak başındaki bilgisayar veya tablet için. Garsonların girdiği tüm çay, kahve ve tost siparişleri anında sesli ikazla ve süre sayaçlarıyla bu ekrana düşer.
+        </p>
+        <button class="btn btn-primary" style="width: 100%;">
+          Ocak Ekranını Aç ➜
+        </button>
+      </a>
+
+      <!-- Garson Mobil Ekranı -->
+      <a href="garson.html" class="glass-panel action-card garson">
+        <div class="card-icon">📱</div>
+        <h2 class="card-title">Garson Mobil Ekranı</h2>
+        <p class="card-desc">
+          Garsonların cep telefonundan kullandığı ekran. Masa seçimi, tek tıkla açık/koyu/şekerli notları, hızlı sipariş gönderme ve masa adisyon takibi.
+        </p>
+        <button class="btn btn-success" style="width: 100%;">
+          Garson Ekranını Aç ➜
+        </button>
+      </a>
+
+      <!-- Kasa & Yönetim -->
+      <a href="kasa.html" class="glass-panel action-card kasa">
+        <div class="card-icon">💼</div>
+        <h2 class="card-title">Kasa & Yönetim Paneli</h2>
+        <p class="card-desc">
+          Masa hesaplarını kapatma (Nakit / Kredi Kartı), günlük ciro, satılan çay-kahve adetleri raporu ve menü fiyatlarını güncelleme ekranı.
+        </p>
+        <button class="btn btn-info" style="width: 100%;">
+          Kasa Paneline Git ➜
+        </button>
+      </a>
+
+    </div>
+
+    <!-- QR Kod ve Ağ Bağlantı Rehberi -->
+    <div class="qr-section">
+      <div class="qr-info">
+        <h3>📲 Garsonlar Nasıl Bağlanacak?</h3>
+        <p>
+          Garsonların telefonunun kahvehanenin <strong>aynı Wi-Fi ağına</strong> bağlı olması yeterlidir. Telefonlarının kamerasını yandaki <strong>QR Koda</strong> tutarak anında sipariş ekranını açabilirler (Şifre veya yükleme gerekmez).
+        </p>
+        <div class="url-box">
+          <span id="garsonUrlText">Yükleniyor...</span>
+          <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem;" onclick="copyUrl()">Kopyala</button>
+        </div>
+      </div>
+
+      <div class="qr-code-box">
+        <img id="qrImage" src="" alt="Garson Giriş QR Kodu">
+        <span>Kamera ile Okutun</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadSystemInfo() {
+      try {
+        const res = await fetch('/api/info');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('garsonUrlText').textContent = data.garsonUrl;
+          document.getElementById('qrImage').src = data.qrCode;
+        }
+      } catch (e) {
+        console.error('Sistem bilgisi alınamadı:', e);
+      }
+    }
+
+    function copyUrl() {
+      const url = document.getElementById('garsonUrlText').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Bağlantı panoya kopyalandı:\n' + url);
+      });
+    }
+
+    loadSystemInfo();
+  </script>
+</body>
+</html>

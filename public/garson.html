@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Garson Mobil Sipariş - Pakyürek Kıraathanesi</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/garson.css">
+</head>
+<body>
+
+  <!-- Mobil Üst Bar -->
+  <header class="garson-header">
+    <div class="header-top">
+      <div class="brand-garson">
+        <span>☕</span> Pakyürek Garson
+      </div>
+
+      <div class="waiter-selector-box">
+        <span>👤</span>
+        <select id="waiterSelect" class="waiter-select" onchange="onWaiterChange()">
+          <option value="Garson 1">Garson 1</option>
+          <option value="Garson 2">Garson 2</option>
+          <option value="Yusuf">Yusuf</option>
+          <option value="Ahmet">Ahmet</option>
+          <option value="Mehmet">Mehmet</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Aktif Masa Seçim Çubuğu -->
+    <div class="active-table-bar" onclick="openTableModal()">
+      <div class="active-table-info">
+        <div class="table-icon-circle" id="headerTableIcon">M</div>
+        <div>
+          <div class="current-table-name" id="currentTableName">Masa Seçiniz</div>
+          <div class="current-table-status" id="currentTableStatus">Dokunarak masa seçin ➜</div>
+        </div>
+      </div>
+      <button class="btn btn-outline" style="padding: 6px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); openTableAdisyon()">
+        📋 Adisyon
+      </button>
+    </div>
+  </header>
+
+  <!-- Yatay Kategori Çipleri -->
+  <nav class="category-scroll" id="categoriesNav">
+    <!-- Dinamik Kategoriler -->
+  </nav>
+
+  <!-- Ürünler Listesi / Izgarası -->
+  <main class="menu-grid" id="productsContainer">
+    <!-- Dinamik Ürünler -->
+  </main>
+
+  <!-- Sabit Alt Sepet Çubuğu -->
+  <footer class="bottom-cart-bar">
+    <div class="cart-bar-inner">
+      <div class="cart-summary" onclick="openCartModal()">
+        <span class="cart-items-count" id="cartCountText">Sepet Boş</span>
+        <span class="cart-total-price" id="cartTotalText">0.00 ₺</span>
+      </div>
+
+      <button class="btn btn-success btn-send-order" id="btnSendOrder" onclick="openCartModal()">
+        Siparişi Gönder ➜
+      </button>
+    </div>
+  </footer>
+
+  <!-- ================= MODALLAR ================= -->
+
+  <!-- 1. Masa Seçim Modalı -->
+  <div class="modal-overlay" id="tableModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="color: var(--primary);">🪑 Masa Seçin</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeTableModal()">✕</button>
+      </div>
+
+      <!-- Salon / Bahçe Filtresi -->
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button class="btn btn-primary" id="tabSalon" style="padding: 6px 14px; font-size: 0.85rem;" onclick="filterTableSection('Salon')">Salon</button>
+        <button class="btn btn-outline" id="tabBahce" style="padding: 6px 14px; font-size: 0.85rem;" onclick="filterTableSection('Bahçe')">Bahçe</button>
+        <button class="btn btn-outline" id="tabAll" style="padding: 6px 14px; font-size: 0.85rem;" onclick="filterTableSection('All')">Tümü</button>
+      </div>
+
+      <div class="tables-grid" id="tablesModalGrid">
+        <!-- Dinamik Masalar -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Hızlı Not / Varyasyon ve Adet Seçim Modalı -->
+  <div class="modal-overlay" id="productOptionsModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h3 id="modalProdName" style="font-size: 1.3rem; color: #fff;">Ürün Adı</h3>
+          <span id="modalProdPrice" style="color: var(--primary); font-weight: 700; font-size: 1.1rem;">0.00 ₺</span>
+        </div>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeOptionsModal()">✕</button>
+      </div>
+
+      <!-- Hızlı Seçenekler / Notlar -->
+      <div style="margin-top: 14px;">
+        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Hızlı Seçenekler (Örn: Açık, Şekerli):</div>
+        <div class="quick-notes-container" id="modalNotesChips">
+          <!-- Dinamik Not Çipleri -->
+        </div>
+
+        <input type="text" id="modalCustomNote" placeholder="Özel not ekleyin (İsteğe bağlı)..." 
+               style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem; outline: none;">
+      </div>
+
+      <!-- Adet Kontrolü -->
+      <div class="quantity-control">
+        <button class="qty-btn" onclick="changeModalQty(-1)">-</button>
+        <span class="qty-display" id="modalQtyDisplay">1</span>
+        <button class="qty-btn" onclick="changeModalQty(1)">+</button>
+      </div>
+
+      <!-- Ekle Butonu -->
+      <button class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.1rem;" onclick="confirmAddToCart()">
+        Sepete Ekle (<span id="modalItemTotalPrice">0 ₺</span>)
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. Sepet Özeti & Ocağa Gönderim Modalı -->
+  <div class="modal-overlay" id="cartModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary);">🛒 Sipariş Özeti</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeCartModal()">✕</button>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-weight: 600; display: flex; justify-content: space-between;">
+        <span>Seçili Masa: <strong id="cartTableName" style="color: var(--primary);">--</strong></span>
+        <span>Garson: <strong id="cartWaiterName" style="color: #fff;">--</strong></span>
+      </div>
+
+      <div id="cartItemsList" style="display: flex; flex-direction: column; gap: 10px; max-height: 40vh; overflow-y: auto; margin-bottom: 16px;">
+        <!-- Sepet Kalemleri -->
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 14px; margin-bottom: 16px;">
+        <span style="font-size: 1.1rem; font-weight: 600;">Toplam:</span>
+        <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);" id="cartModalTotal">0.00 ₺</span>
+      </div>
+
+      <button class="btn btn-success" style="width: 100%; padding: 16px; font-size: 1.2rem;" onclick="submitOrderToKitchen()">
+        🚀 OCAĞA GÖNDER
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. Masanın Açık Adisyonu Modalı -->
+  <div class="modal-overlay" id="adisyonModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary);">📋 Masa Adisyonu</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeAdisyonModal()">✕</button>
+      </div>
+
+      <h4 id="adisyonTableName" style="color: #fff; margin-bottom: 12px;">--</h4>
+
+      <div id="adisyonOrdersList" style="display: flex; flex-direction: column; gap: 12px; max-height: 50vh; overflow-y: auto; margin-bottom: 16px;">
+        <!-- Adisyon Siparişleri -->
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 14px;">
+        <span style="font-size: 1.1rem; font-weight: 600;">Masa Toplamı:</span>
+        <span style="font-size: 1.6rem; font-weight: 800; color: #f87171;" id="adisyonTotalAmount">0.00 ₺</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Bildirimleri -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/garson.js"></script>
+</body>
+</html>

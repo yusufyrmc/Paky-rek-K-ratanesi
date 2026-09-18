@@ -1,0 +1,53 @@
+# ☕ Pakyürek Kıraathanesi - Gerçek Zamanlı Sipariş & Otomasyon Sistemi
+
+Kıraathaneler ve çay ocakları için özel olarak geliştirilmiş; garsonların cep telefonlarından hızlıca sipariş girmesini, ocak kısmındaki PC ekranında ise siparişlerin anında **sesli çan ikazı** ve **renkli süre sayaçlarıyla** görüntülenmesini sağlayan tam teşekküllü otomasyon sistemi.
+
+---
+
+## 🌟 Özellikler
+
+- **📱 Garson Mobil Arayüzü**:
+  - Hızlı masa seçimi (Salon & Bahçe).
+  - Tek dokunuşla çay ve kahve varyasyonları (Açık, Koyu, Duble, Az Şekerli, Orta vb.).
+  - Tek dokunuşla ocağa gönderme ve titreşimli onay.
+  - Masanın açık adisyonunu ve ocağın hazırlama durumunu anlık takip.
+
+- **🫖 Ocak / Mutfak Ekranı (KDS)**:
+  - WebSocket (Socket.IO) ile sıfır gecikmeli canlı sipariş akışı.
+  - Web Audio API ile dikkat çekici çan melodisi (sesli ikaz).
+  - Bekleme süre sayaçları (5 dakikayı geçen siparişler için kırmızı alarm nabzı).
+  - "Hazırlanıyor" ve "Hazır / Çıktı" durum yönetimi.
+
+- **💼 Kasa & Yönetim Paneli**:
+  - Masanın adisyonunu görüntüleme ve kapatma (Nakit, Kredi Kartı, Veresiye).
+  - Masa taşıma / aktarma.
+  - Günlük toplam ciro, tahsilat sayısı ve satılan çay-kahve adetleri raporu.
+  - Menüdeki ürünleri ve fiyatları tek tıkla güncelleme.
+
+- **📲 Kolay Garson Bağlantısı**:
+  - Ekrandaki QR kodu telefon kamerasıyla okutarak anında bağlanma (Kurulum/şifre gerekmez).
+
+---
+
+## 🛠️ Kurulum & Çalıştırma
+
+### Gereksinimler
+- [Node.js](https://nodejs.org/) (v16 veya üzeri)
+
+### Adımlar
+
+1. Bağımlılıkları yükleyin:
+```bash
+npm install
+```
+
+2. Sunucuyu başlatın:
+```bash
+npm start
+```
+veya Windows'ta doğrudan **`baslat.bat`** dosyasına çift tıklayın.
+
+3. Tarayıcınızda açın:
+- **Ocak Ekranı:** `http://localhost:3000/ocak.html`
+- **Garson Ekranı:** `http://<BILGISAYAR-IP>:3000/garson.html`
+- **Kasa Paneli:** `http://localhost:3000/kasa.html`
