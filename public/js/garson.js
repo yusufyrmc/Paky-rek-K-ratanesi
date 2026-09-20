@@ -484,6 +484,19 @@ function selectTable(table) {
   document.getElementById('currentTableStatus').textContent = isOccupied
     ? `Açık Hesap: ${table.current_total.toFixed(2)} ₺`
     : 'Masa Boş (Dokunarak Değiştir)';
+
+  const adisyonBtn = document.getElementById('btnTableAdisyon');
+  if (adisyonBtn) {
+    if (isOccupied && table.current_total > 0) {
+      adisyonBtn.innerHTML = `📋 Adisyon (${table.current_total.toFixed(0)} ₺)`;
+      adisyonBtn.classList.remove('btn-outline');
+      adisyonBtn.classList.add('btn-primary');
+    } else {
+      adisyonBtn.innerHTML = `📋 Adisyon`;
+      adisyonBtn.classList.remove('btn-primary');
+      adisyonBtn.classList.add('btn-outline');
+    }
+  }
 }
 
 // Masa Adisyonunu Görüntüleme
@@ -571,6 +584,15 @@ function setupSocket() {
     console.log('[Garson] Canlı bağlantı sağlandı.');
   });
 
+  // Yeni sipariş eklendiğinde masaları tazele
+  socket.on('new_order', (order) => {
+    loadTables();
+    const adisyonModal = document.getElementById('adisyonModal');
+    if (adisyonModal && adisyonModal.classList.contains('active') && selectedTable && order && order.table_id === selectedTable.id) {
+      openTableAdisyon();
+    }
+  });
+
   // Ocakçı siparişi "ONAYLADI"ysa telefona uyarı düşsün!
   socket.on('order_status_updated', (data) => {
     if ((data.status === 'approved' || data.status === 'ready') && data.order) {
@@ -578,10 +600,26 @@ function setupSocket() {
       showToast(`✓ ${data.order.table_name} siparişi ocak tarafından ONAYLANDI!`, 'success');
     }
     loadTables();
+    const adisyonModal = document.getElementById('adisyonModal');
+    if (adisyonModal && adisyonModal.classList.contains('active')) {
+      openTableAdisyon();
+    }
   });
 
   socket.on('tables_changed', () => {
     loadTables();
+    const adisyonModal = document.getElementById('adisyonModal');
+    if (adisyonModal && adisyonModal.classList.contains('active')) {
+      openTableAdisyon();
+    }
+  });
+
+  socket.on('table_paid', () => {
+    loadTables();
+    const adisyonModal = document.getElementById('adisyonModal');
+    if (adisyonModal && adisyonModal.classList.contains('active')) {
+      openTableAdisyon();
+    }
   });
 
   socket.on('menu_changed', () => {

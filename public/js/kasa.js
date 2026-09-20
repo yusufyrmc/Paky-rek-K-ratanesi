@@ -512,9 +512,22 @@ function setupSocket() {
     transports: ['websocket', 'polling']
   });
 
-  socket.on('new_order', () => {
+  socket.on('new_order', (order) => {
     loadTables();
     loadDailyReports();
+    if (order && order.table_name) {
+      showToast(`🔔 Yeni Sipariş: ${order.table_name} (${order.waiter_name || 'Garson'}) - ${order.total_amount ? order.total_amount.toFixed(2) : ''} ₺`, 'warning');
+      if (selectedTable && selectedTable.id === order.table_id) {
+        selectKasaTable(selectedTable);
+      }
+    }
+  });
+
+  socket.on('order_status_updated', () => {
+    loadTables();
+    if (selectedTable) {
+      selectKasaTable(selectedTable);
+    }
   });
 
   socket.on('tables_changed', () => {

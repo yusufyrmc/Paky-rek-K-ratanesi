@@ -1,7 +1,7 @@
 // Pakyürek Kıraathanesi - Ocak KDS Mantığı
 let socket;
 let allOrders = [];
-let currentFilter = 'active'; // 'active', 'pending', 'preparing', 'ready'
+let currentFilter = 'pending'; // 'pending', 'approved', 'all'
 let soundEnabled = true;
 let audioCtx = null;
 
@@ -152,14 +152,16 @@ async function fetchOrders() {
 }
 
 // Filtre Değiştirme
-function setFilter(filter) {
+function setFilter(filter, el) {
   currentFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+  } else if (typeof event !== 'undefined' && event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  }
   renderOrders();
 }
-
-let currentFilter = 'pending'; // 'pending', 'approved', 'all'
 
 // Sayaçları Güncelle
 function updateCounts() {
