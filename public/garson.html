@@ -37,8 +37,11 @@
     <div class="active-table-bar" onclick="openTableModal()">
       <div class="active-table-info">
         <div class="table-icon-circle" id="headerTableIcon">M</div>
-        <div>
-          <div class="current-table-name" id="currentTableName">Masa Seçiniz</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div class="current-table-name" id="currentTableName" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Masa Seçiniz</div>
+            <button class="btn btn-outline" id="btnHeaderRename" style="padding: 2px 7px; font-size: 0.75rem; border-radius: 6px; line-height: 1;" onclick="event.stopPropagation(); openGarsonRenameModal()" title="Masa İsmini Değiştir">✏️</button>
+          </div>
           <div class="current-table-status" id="currentTableStatus">Dokunarak masa seçin ➜</div>
         </div>
       </div>
@@ -188,6 +191,36 @@
         style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 14px;">
         <span style="font-size: 1.1rem; font-weight: 600;">Masa Toplamı:</span>
         <span style="font-size: 1.6rem; font-weight: 800; color: #f87171;" id="adisyonTotalAmount">0.00 ₺</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Masa İsim Değiştirme Modalı -->
+  <div class="modal-overlay" id="renameModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary); font-size: 1.25rem;">✏️ Masa İsmi Ver / Değiştir</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeGarsonRenameModal()">✕</button>
+      </div>
+
+      <div style="margin-bottom: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+        Masa adını veya müşteri ismini girin:
+      </div>
+
+      <input type="text" id="garsonRenameInput" placeholder="Örn: Kral Masası, Ahmet Bey, Balkon 1..."
+        onkeydown="if(event.key === 'Enter') saveGarsonRenameTable()"
+        style="width: 100%; padding: 12px; font-size: 1.05rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; outline: none; margin-bottom: 12px;">
+
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;">
+        <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="setGarsonRenameSuggestion('Kral Masası')">👑 Kral Masası</button>
+        <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="setGarsonRenameSuggestion('Cam Kenarı')">🪟 Cam Kenarı</button>
+        <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="setGarsonRenameSuggestion('Köşe Masa')">🛋️ Köşe Masa</button>
+        <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="setGarsonRenameSuggestion('Protokol')">⭐ Protokol</button>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-outline" style="flex: 1; padding: 12px;" onclick="closeGarsonRenameModal()">Vazgeç</button>
+        <button class="btn btn-primary" style="flex: 1; padding: 12px; font-weight: 700;" onclick="saveGarsonRenameTable()">Kaydet</button>
       </div>
     </div>
   </div>

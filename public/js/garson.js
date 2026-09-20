@@ -456,7 +456,10 @@ function renderTablesModal() {
 
     return `
       <div class="table-btn ${isOccupied ? 'occupied' : 'empty'} ${isSelected ? 'selected' : ''}" 
-           onclick="selectTableById(${t.id})">
+           onclick="selectTableById(${t.id})" style="position: relative;">
+        <button type="button" class="btn-table-quick-rename" onclick="event.stopPropagation(); openGarsonRenameModalById(${t.id}, '${escapeHtml(t.name)}')" title="İsim / No Değiştir" style="position: absolute; top: 6px; right: 6px; border: none; background: rgba(0,0,0,0.35); color: #fff; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; line-height: 1;">
+          ✏️
+        </button>
         <div style="width: 8px; height: 8px; border-radius: 50%;" class="status-dot"></div>
         <div class="table-btn-title">${escapeHtml(t.name)}</div>
         <div class="table-btn-amount">
@@ -472,6 +475,64 @@ function selectTableById(id) {
   if (table) {
     selectTable(table);
     closeTableModal();
+  }
+}
+
+// Masa İsmi Değiştirme (Garson Modalı)
+let tableToRename = null;
+
+function openGarsonRenameModal() {
+  if (!selectedTable) {
+    showToast('Lütfen önce bir masa seçin', 'warning');
+    return;
+  }
+  openGarsonRenameModalById(selectedTable.id, selectedTable.name);
+}
+
+function openGarsonRenameModalById(id, currentName) {
+  tableToRename = tablesData.find(t => t.id === id) || { id, name: currentName };
+  const input = document.getElementById('garsonRenameInput');
+  input.value = currentName || (tableToRename ? tableToRename.name : '');
+  document.getElementById('renameModal').classList.add('active');
+  setTimeout(() => input.focus(), 120);
+}
+
+function closeGarsonRenameModal() {
+  document.getElementById('renameModal').classList.remove('active');
+  tableToRename = null;
+}
+
+function setGarsonRenameSuggestion(text) {
+  const input = document.getElementById('garsonRenameInput');
+  input.value = text;
+  input.focus();
+}
+
+async function saveGarsonRenameTable() {
+  if (!tableToRename) return;
+  const newName = document.getElementById('garsonRenameInput').value.trim();
+  if (!newName) {
+    showToast('Lütfen geçerli bir masa adı girin!', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/tables/${tableToRename.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Masa adı "${newName}" olarak güncellendi!`, 'success');
+      closeGarsonRenameModal();
+      await loadTables();
+    } else {
+      showToast('Güncellenemedi: ' + (data.error || 'Hata oluştu'), 'danger');
+    }
+  } catch (err) {
+    console.error('Masa ismi güncelleme hatası:', err);
+    showToast('Bağlantı hatası oluştu!', 'danger');
   }
 }
 

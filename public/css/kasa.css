@@ -182,3 +182,23 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Ciro Gizlilik Modu */
+.stats-grid.revenue-hidden .stat-card .stat-value {
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.stats-grid.revenue-hidden .stat-card.total-revenue .stat-value {
+  color: var(--text-secondary);
+}
+
+.stat-card {
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.25);
+}

@@ -4,6 +4,8 @@ let allTables = [];
 let currentSection = 'Salon';
 let selectedTable = null;
 let rawMenuData = [];
+let isRevenueHidden = localStorage.getItem('pakyurek_hide_revenue') === 'true';
+let latestDailySummary = { total: 0, nakit: 0, kart: 0, transaction_count: 0 };
 
 // Tüm Verileri Yükle
 async function loadAllData() {
@@ -238,17 +240,73 @@ async function closeTableAccount(paymentType) {
   }
 }
 
+// Ciro ve Rakam Gizliliği Yönetimi
+function toggleRevenuePrivacy() {
+  isRevenueHidden = !isRevenueHidden;
+  localStorage.setItem('pakyurek_hide_revenue', isRevenueHidden ? 'true' : 'false');
+  updateRevenuePrivacyUI();
+  showToast(isRevenueHidden ? '🙈 Ciro rakamları gizlendi' : '👁️ Ciro rakamları gösteriliyor', 'info');
+}
+
+function updateRevenuePrivacyUI() {
+  const btn = document.getElementById('btnToggleRevenuePrivacy');
+  const icon = document.getElementById('privacyIcon');
+  const text = document.getElementById('privacyText');
+
+  const headerIcon = document.getElementById('headerPrivacyIcon');
+  const headerText = document.getElementById('headerPrivacyText');
+
+  const statTotal = document.getElementById('statTotalRev');
+  const statNakit = document.getElementById('statNakitRev');
+  const statKart = document.getElementById('statKartRev');
+  const statsGrid = document.getElementById('statsGrid');
+
+  if (isRevenueHidden) {
+    if (icon) icon.textContent = '🙈';
+    if (text) text.textContent = 'Rakamları Göster';
+    if (btn) {
+      btn.style.borderColor = 'var(--primary)';
+      btn.style.color = 'var(--primary)';
+    }
+
+    if (headerIcon) headerIcon.textContent = '🙈';
+    if (headerText) headerText.textContent = 'Ciroyu Göster';
+
+    if (statTotal) statTotal.textContent = '•••• ₺';
+    if (statNakit) statNakit.textContent = '•••• ₺';
+    if (statKart) statKart.textContent = '•••• ₺';
+
+    if (statsGrid) statsGrid.classList.add('revenue-hidden');
+  } else {
+    if (icon) icon.textContent = '👁️';
+    if (text) text.textContent = 'Rakamları Gizle';
+    if (btn) {
+      btn.style.borderColor = 'var(--border-color)';
+      btn.style.color = 'inherit';
+    }
+
+    if (headerIcon) headerIcon.textContent = '👁️';
+    if (headerText) headerText.textContent = 'Ciroyu Gizle';
+
+    if (statTotal) statTotal.textContent = `${(latestDailySummary.total || 0).toFixed(2)} ₺`;
+    if (statNakit) statNakit.textContent = `${(latestDailySummary.nakit || 0).toFixed(2)} ₺`;
+    if (statKart) statKart.textContent = `${(latestDailySummary.kart || 0).toFixed(2)} ₺`;
+
+    if (statsGrid) statsGrid.classList.remove('revenue-hidden');
+  }
+}
+
 // Günlük Rapor ve İstatistikler
 async function loadDailyReports() {
   try {
     const res = await fetch('/api/reports/daily');
     const data = await res.json();
     if (data.success) {
-      // Ciro Özeti
-      document.getElementById('statTotalRev').textContent = `${(data.summary.total || 0).toFixed(2)} ₺`;
-      document.getElementById('statNakitRev').textContent = `${(data.summary.nakit || 0).toFixed(2)} ₺`;
-      document.getElementById('statKartRev').textContent = `${(data.summary.kart || 0).toFixed(2)} ₺`;
-      document.getElementById('statTxCount').textContent = data.summary.transaction_count || 0;
+      latestDailySummary = data.summary || { total: 0, nakit: 0, kart: 0, transaction_count: 0 };
+
+      // Ciro Özeti ve Gizlilik UI Güncelle
+      updateRevenuePrivacyUI();
+      document.getElementById('statTxCount').textContent = latestDailySummary.transaction_count || 0;
 
       // En Çok Satanlar
       const topContainer = document.getElementById('topProductsList');

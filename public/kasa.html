@@ -19,7 +19,10 @@
       <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981;">Online</span>
     </div>
 
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button class="btn btn-outline" id="btnHeaderPrivacy" onclick="toggleRevenuePrivacy()" title="Ciro Rakamlarını Gizle / Göster">
+        <span id="headerPrivacyIcon">👁️</span> <span id="headerPrivacyText">Ciroyu Gizle</span>
+      </button>
       <button class="btn btn-outline" onclick="openMenuManageModal()">
         ☕ Menü & Fiyatları Düzenle
       </button>
@@ -105,10 +108,23 @@
     <!-- SAĞ BÖLÜM: GÜNLÜK RAPORLAR & İSTATİSTİKLER -->
     <div style="display: flex; flex-direction: column; gap: 20px;">
       
-      <!-- Ciro Özeti Kartları -->
-      <div class="stats-grid">
+      <!-- Ciro Özeti Kartları Başlık ve Gizlilik Butonu -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+        <span style="font-weight: 700; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
+          📊 Günlük Kasa Raporu
+        </span>
+        <button class="btn btn-outline" id="btnToggleRevenuePrivacy" onclick="toggleRevenuePrivacy()" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+          <span id="privacyIcon">👁️</span> <span id="privacyText">Rakamları Gizle</span>
+        </button>
+      </div>
+
+      <!-- Ciro Özeti Kartları (Tıklayarak da açılıp kapanabilir) -->
+      <div class="stats-grid" id="statsGrid" onclick="toggleRevenuePrivacy()" style="cursor: pointer;" title="Tıklayarak ciroyu gizle / göster">
         <div class="stat-card total-revenue">
-          <span class="stat-label">💰 Bugünkü Toplam Ciro</span>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="stat-label">💰 Bugünkü Toplam Ciro</span>
+            <span class="privacy-icon-indicator" style="font-size: 0.8rem; opacity: 0.7;">👁️</span>
+          </div>
           <span class="stat-value" id="statTotalRev">0.00 ₺</span>
         </div>
         <div class="stat-card">
