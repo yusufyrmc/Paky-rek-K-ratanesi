@@ -206,13 +206,17 @@ async function initDatabase() {
   const tableCount = await get('SELECT COUNT(*) as count FROM tables');
   if (tableCount.count === 0) {
     console.log('Başlangıç masaları ekleniyor...');
-    // Salon Masaları 1 - 15
+    // İçerisi Masaları 1 - 15
     for (let i = 1; i <= 15; i++) {
-      await run('INSERT INTO tables (name, section, status) VALUES (?, ?, ?)', [`Masa ${i}`, 'Salon', 'empty']);
+      await run('INSERT INTO tables (name, section, status) VALUES (?, ?, ?)', [`Masa ${i}`, 'İçerisi', 'empty']);
     }
     // Bahçe Masaları 1 - 10
     for (let i = 1; i <= 10; i++) {
       await run('INSERT INTO tables (name, section, status) VALUES (?, ?, ?)', [`Bahçe ${i}`, 'Bahçe', 'empty']);
+    }
+    // Dışarısı Masaları 1 - 5
+    for (let i = 1; i <= 5; i++) {
+      await run('INSERT INTO tables (name, section, status) VALUES (?, ?, ?)', [`Dışarısı ${i}`, 'Dışarısı', 'empty']);
     }
   }
 

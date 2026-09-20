@@ -4,7 +4,7 @@ let menuData = [];
 let tablesData = [];
 let currentCategory = 'all';
 let selectedTable = null;
-let currentSectionFilter = 'Salon';
+let currentSectionFilter = 'İçerisi';
 
 // Sepet
 let cart = [];
@@ -437,9 +437,16 @@ function closeTableModal() {
 
 function filterTableSection(section) {
   currentSectionFilter = section;
-  document.getElementById('tabSalon').className = section === 'Salon' ? 'btn btn-primary' : 'btn btn-outline';
-  document.getElementById('tabBahce').className = section === 'Bahçe' ? 'btn btn-primary' : 'btn btn-outline';
-  document.getElementById('tabAll').className = section === 'All' ? 'btn btn-primary' : 'btn btn-outline';
+  const tabIcerisi = document.getElementById('tabIcerisi');
+  const tabBahce = document.getElementById('tabBahce');
+  const tabDisarisi = document.getElementById('tabDisarisi');
+  const tabAll = document.getElementById('tabAll');
+
+  if (tabIcerisi) tabIcerisi.className = section === 'İçerisi' ? 'btn btn-primary' : 'btn btn-outline';
+  if (tabBahce) tabBahce.className = section === 'Bahçe' ? 'btn btn-primary' : 'btn btn-outline';
+  if (tabDisarisi) tabDisarisi.className = section === 'Dışarısı' ? 'btn btn-primary' : 'btn btn-outline';
+  if (tabAll) tabAll.className = section === 'All' ? 'btn btn-primary' : 'btn btn-outline';
+
   renderTablesModal();
 }
 
@@ -447,7 +454,11 @@ function renderTablesModal() {
   const container = document.getElementById('tablesModalGrid');
   let filtered = tablesData;
   if (currentSectionFilter !== 'All') {
-    filtered = tablesData.filter(t => t.section === currentSectionFilter);
+    if (currentSectionFilter === 'İçerisi') {
+      filtered = tablesData.filter(t => t.section === 'İçerisi' || t.section === 'Salon');
+    } else {
+      filtered = tablesData.filter(t => t.section === currentSectionFilter);
+    }
   }
 
   container.innerHTML = filtered.map(t => {

@@ -1,7 +1,7 @@
 // Pakyürek Kıraathanesi - Kasa & Yönetim Mantığı
 let socket;
 let allTables = [];
-let currentSection = 'Salon';
+let currentSection = 'İçerisi';
 let selectedTable = null;
 let rawMenuData = [];
 let isRevenueHidden = localStorage.getItem('pakyurek_hide_revenue') === 'true';
@@ -42,9 +42,16 @@ async function loadTables() {
 
 function filterSection(section) {
   currentSection = section;
-  document.getElementById('btnFilterSalon').className = section === 'Salon' ? 'btn btn-primary' : 'btn btn-outline';
-  document.getElementById('btnFilterBahce').className = section === 'Bahçe' ? 'btn btn-primary' : 'btn btn-outline';
-  document.getElementById('btnFilterAll').className = section === 'All' ? 'btn btn-primary' : 'btn btn-outline';
+  const btnIcerisi = document.getElementById('btnFilterIcerisi');
+  const btnBahce = document.getElementById('btnFilterBahce');
+  const btnDisarisi = document.getElementById('btnFilterDisarisi');
+  const btnAll = document.getElementById('btnFilterAll');
+
+  if (btnIcerisi) btnIcerisi.className = section === 'İçerisi' ? 'btn btn-primary' : 'btn btn-outline';
+  if (btnBahce) btnBahce.className = section === 'Bahçe' ? 'btn btn-primary' : 'btn btn-outline';
+  if (btnDisarisi) btnDisarisi.className = section === 'Dışarısı' ? 'btn btn-primary' : 'btn btn-outline';
+  if (btnAll) btnAll.className = section === 'All' ? 'btn btn-primary' : 'btn btn-outline';
+
   renderTablesGrid();
 }
 
@@ -52,7 +59,11 @@ function renderTablesGrid() {
   const container = document.getElementById('tablesGrid');
   let filtered = allTables;
   if (currentSection !== 'All') {
-    filtered = allTables.filter(t => t.section === currentSection);
+    if (currentSection === 'İçerisi') {
+      filtered = allTables.filter(t => t.section === 'İçerisi' || t.section === 'Salon');
+    } else {
+      filtered = allTables.filter(t => t.section === currentSection);
+    }
   }
 
   const occupiedCount = allTables.filter(t => t.status === 'occupied' || t.current_total > 0).length;
@@ -411,16 +422,29 @@ function renderManageProducts() {
   let html = '';
 
   rawMenuData.forEach(cat => {
-    html += `<h4 style="color: var(--primary); margin: 12px 0 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">${cat.icon || '☕'} ${cat.name}</h4>`;
+    html += `<h4 style="color: var(--primary); margin: 14px 0 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">${cat.icon || '☕'} ${cat.name}</h4>`;
     cat.products.forEach(p => {
+      const notesCount = (p.quick_notes || []).length;
       html += `
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.04); border-radius: 6px; margin-bottom: 6px;">
-          <span style="font-weight: 600; color: #fff;">${escapeHtml(p.name)}</span>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <input type="number" id="price-input-${p.id}" value="${p.price}" style="width: 70px; padding: 6px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 4px; color: #fff; text-align: right;">
-            <span style="font-weight: 700;">₺</span>
-            <button class="btn btn-primary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="updateProductPrice(${p.id}, ${p.category_id}, '${escapeHtml(p.name)}')">Kaydet</button>
-            <button class="btn btn-outline" style="padding: 6px 10px; color: #ef4444; font-size: 0.8rem;" onclick="deleteProduct(${p.id})">Sil</button>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 6px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+          <div style="flex: 1; min-width: 140px;">
+            <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${escapeHtml(p.name)}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+              ${notesCount > 0 
+                ? (p.quick_notes.slice(0, 4).join(', ') + (notesCount > 4 ? '...' : '')) 
+                : '<span style="opacity: 0.5;">(Kolay tuş yok)</span>'}
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <input type="number" id="price-input-${p.id}" value="${p.price}" style="width: 65px; padding: 6px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 4px; color: #fff; text-align: right; font-weight: 700;">
+            <span style="font-weight: 700; color: var(--primary);">₺</span>
+            
+            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem; color: #fbbf24; border-color: #fbbf24;" onclick="openProductNotesModal(${p.id})" title="Şekerli, Sade vb. Kolay Tuşları Ayarla">
+              ⚙️ Kolay Tuşlar (${notesCount})
+            </button>
+            <button class="btn btn-primary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="updateProductPrice(${p.id}, ${p.category_id}, '${escapeHtml(p.name)}')">Fiyatı Kaydet</button>
+            <button class="btn btn-outline" style="padding: 6px 8px; color: #ef4444; font-size: 0.8rem;" onclick="deleteProduct(${p.id})">🗑️</button>
           </div>
         </div>
       `;
@@ -428,6 +452,114 @@ function renderManageProducts() {
   });
 
   container.innerHTML = html;
+}
+
+// Kolay Tuşlar (Hızlı Notlar) Düzenleme Modalı
+let activeProductForNotes = null;
+let currentProductNotesList = [];
+
+function openProductNotesModal(prodId) {
+  let found = null;
+  for (const cat of rawMenuData) {
+    const p = cat.products.find(x => x.id === prodId);
+    if (p) {
+      found = p;
+      break;
+    }
+  }
+
+  if (!found) return;
+
+  activeProductForNotes = found;
+  currentProductNotesList = Array.isArray(found.quick_notes) ? [...found.quick_notes] : [];
+
+  document.getElementById('notesModalProdTitle').textContent = `${found.name} (${found.price.toFixed(2)} ₺)`;
+  document.getElementById('newNoteInput').value = '';
+  renderNotesChips();
+
+  document.getElementById('productNotesModal').classList.add('active');
+  setTimeout(() => document.getElementById('newNoteInput').focus(), 150);
+}
+
+function closeProductNotesModal() {
+  document.getElementById('productNotesModal').classList.remove('active');
+  activeProductForNotes = null;
+  currentProductNotesList = [];
+}
+
+function renderNotesChips() {
+  const container = document.getElementById('notesChipsList');
+  if (currentProductNotesList.length === 0) {
+    container.innerHTML = `<span style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic;">Henüz kolay tuş eklenmemiş. Aşağıdan yazarak ekleyebilirsiniz.</span>`;
+    return;
+  }
+
+  container.innerHTML = currentProductNotesList.map((note, idx) => `
+    <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; padding: 5px 10px; border-radius: 16px; font-size: 0.85rem; font-weight: 700;">
+      ${escapeHtml(note)}
+      <button type="button" onclick="removeNoteByIndex(${idx})" style="background: none; border: none; color: #f87171; font-weight: 800; cursor: pointer; padding: 0 2px; font-size: 0.9rem; line-height: 1;" title="Sil">✕</button>
+    </span>
+  `).join('');
+}
+
+function removeNoteByIndex(idx) {
+  currentProductNotesList.splice(idx, 1);
+  renderNotesChips();
+}
+
+function addNewNoteToActiveProduct() {
+  const input = document.getElementById('newNoteInput');
+  const val = input.value.trim();
+  if (!val) return;
+
+  if (currentProductNotesList.includes(val)) {
+    showToast('Bu seçenek zaten ekli!', 'warning');
+    return;
+  }
+
+  currentProductNotesList.push(val);
+  input.value = '';
+  renderNotesChips();
+  input.focus();
+}
+
+function addPresetNote(note) {
+  if (currentProductNotesList.includes(note)) {
+    showToast(`"${note}" zaten ekli`, 'info');
+    return;
+  }
+  currentProductNotesList.push(note);
+  renderNotesChips();
+}
+
+async function saveActiveProductNotes() {
+  if (!activeProductForNotes) return;
+
+  try {
+    const res = await fetch(`/api/products/${activeProductForNotes.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category_id: activeProductForNotes.category_id,
+        name: activeProductForNotes.name,
+        price: activeProductForNotes.price,
+        quick_notes: currentProductNotesList
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✓ ${activeProductForNotes.name} kolay tuşları kaydedildi!`, 'success');
+      activeProductForNotes.quick_notes = [...currentProductNotesList];
+      closeProductNotesModal();
+      await loadMenuForManage();
+    } else {
+      showToast('Kaydedilemedi: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    console.error('Kolay tuş kayıt hatası:', err);
+    showToast('Bağlantı hatası!', 'danger');
+  }
 }
 
 function openMenuManageModal() {
@@ -441,11 +573,23 @@ function closeMenuManageModal() {
 
 async function updateProductPrice(prodId, catId, name) {
   const newPrice = document.getElementById(`price-input-${prodId}`).value;
+  let found = null;
+  for (const cat of rawMenuData) {
+    const p = cat.products.find(x => x.id === prodId);
+    if (p) { found = p; break; }
+  }
+  const quickNotes = found ? (found.quick_notes || []) : [];
+
   try {
     const res = await fetch(`/api/products/${prodId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category_id: catId, name, price: parseFloat(newPrice) })
+      body: JSON.stringify({
+        category_id: catId,
+        name,
+        price: parseFloat(newPrice),
+        quick_notes: quickNotes
+      })
     });
     const data = await res.json();
     if (data.success) {

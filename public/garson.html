@@ -92,14 +92,16 @@
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeTableModal()">✕</button>
       </div>
 
-      <!-- Salon / Bahçe Filtresi -->
-      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-        <button class="btn btn-primary" id="tabSalon" style="padding: 6px 14px; font-size: 0.85rem;"
-          onclick="filterTableSection('Salon')">Salon</button>
-        <button class="btn btn-outline" id="tabBahce" style="padding: 6px 14px; font-size: 0.85rem;"
-          onclick="filterTableSection('Bahçe')">Bahçe</button>
-        <button class="btn btn-outline" id="tabAll" style="padding: 6px 14px; font-size: 0.85rem;"
-          onclick="filterTableSection('All')">Tümü</button>
+      <!-- İçerisi / Bahçe / Dışarısı / Tümü Filtresi -->
+      <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+        <button class="btn btn-primary" id="tabIcerisi" style="padding: 6px 13px; font-size: 0.85rem;"
+          onclick="filterTableSection('İçerisi')">🏠 İçerisi</button>
+        <button class="btn btn-outline" id="tabBahce" style="padding: 6px 13px; font-size: 0.85rem;"
+          onclick="filterTableSection('Bahçe')">🌿 Bahçe</button>
+        <button class="btn btn-outline" id="tabDisarisi" style="padding: 6px 13px; font-size: 0.85rem;"
+          onclick="filterTableSection('Dışarısı')">☀️ Dışarısı</button>
+        <button class="btn btn-outline" id="tabAll" style="padding: 6px 13px; font-size: 0.85rem;"
+          onclick="filterTableSection('All')">✨ Tümü</button>
       </div>
 
       <div class="tables-grid" id="tablesModalGrid">

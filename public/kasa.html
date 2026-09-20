@@ -48,10 +48,11 @@
       
       <div class="glass-panel" style="padding: 16px;">
         <div class="tables-filter-bar">
-          <div style="display: flex; gap: 6px;">
-            <button class="btn btn-primary" id="btnFilterSalon" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('Salon')">Salon</button>
-            <button class="btn btn-outline" id="btnFilterBahce" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('Bahçe')">Bahçe</button>
-            <button class="btn btn-outline" id="btnFilterAll" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('All')">Tümü</button>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btnFilterIcerisi" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('İçerisi')">🏠 İçerisi</button>
+            <button class="btn btn-outline" id="btnFilterBahce" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('Bahçe')">🌿 Bahçe</button>
+            <button class="btn btn-outline" id="btnFilterDisarisi" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('Dışarısı')">☀️ Dışarısı</button>
+            <button class="btn btn-outline" id="btnFilterAll" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('All')">✨ Tümü</button>
           </div>
           <span style="font-size: 0.85rem; color: var(--text-secondary);" id="occupiedCountLabel">Dolu Masalar: 0</span>
         </div>
@@ -199,6 +200,70 @@
     </div>
   </div>
 
+  <!-- Kolay Tuşlar (Hızlı Notlar / Seçenekler) Düzenleme Modalı -->
+  <div class="modal-overlay" id="productNotesModal" style="z-index: 1100;">
+    <div class="modal-content" style="max-width: 550px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div>
+          <h3 style="color: var(--primary); font-size: 1.25rem;">⚙️ Kolay Tuşları / Seçenekleri Ayarla</h3>
+          <div id="notesModalProdTitle" style="color: #fff; font-weight: 700; font-size: 1.1rem; margin-top: 2px;">Ürün Adı</div>
+        </div>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeProductNotesModal()">✕</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">
+        Garson sipariş alırken bu ürüne dokunduğunda açılacak hızlı butonları buradan belirleyebilirsiniz (Örn: Şekerli, Sade, Açık, Duble).
+      </p>
+
+      <!-- Mevcut Kolay Tuş Çipleri -->
+      <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 14px; border: 1px dashed var(--border-color);">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">
+          Mevcut Kolay Tuşlar (Silmek için ✕'e tıklayın):
+        </div>
+        <div id="notesChipsList" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; align-items: center;">
+          <!-- Dinamik Çipler -->
+        </div>
+      </div>
+
+      <!-- Yeni Kolay Tuş Ekle -->
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 6px;">Yeni Kolay Tuş Ekle:</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="newNoteInput" placeholder="Örn: Damla Sakızlı, Fincan, Bol Köpüklü..."
+            onkeydown="if(event.key==='Enter') addNewNoteToActiveProduct()"
+            style="flex: 1; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.95rem; outline: none;">
+          <button class="btn btn-primary" onclick="addNewNoteToActiveProduct()" style="padding: 10px 16px; font-weight: 700;">+ Ekle</button>
+        </div>
+      </div>
+
+      <!-- Hazır Şablon Önerileri -->
+      <div style="margin-bottom: 18px;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
+          Hazır Hızlı Seçenekler (Tıklayarak ekle):
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="notesQuickPresets">
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Sade')">+ Sade</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Az Şekerli')">+ Az Şekerli</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Orta')">+ Orta</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Şekerli')">+ Şekerli</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Açık')">+ Açık</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Koyu')">+ Koyu</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Duble')">+ Duble</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Limonlu')">+ Limonlu</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Çift Kaşar')">+ Çift Kaşar</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Acılı')">+ Acılı</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Soğuk')">+ Soğuk</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Buzlu')">+ Buzlu</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-outline" style="flex: 1; padding: 12px;" onclick="closeProductNotesModal()">Kapat</button>
+        <button class="btn btn-success" style="flex: 1; padding: 12px; font-weight: 800;" onclick="saveActiveProductNotes()">✓ DEĞİŞİKLİKLERİ KAYDET</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Masa İsim / Numara Değiştir Modalı -->
   <div class="modal-overlay" id="renameModal">
     <div class="modal-content">
@@ -226,9 +291,9 @@
         <input type="text" id="newTableName" placeholder="Masa Adı / Numarası..." style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
         <label>Bölüm:</label>
         <select id="newTableSection" style="padding: 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
-          <option value="Salon">Salon</option>
-          <option value="Bahçe">Bahçe</option>
-          <option value="Balkon">Balkon</option>
+          <option value="İçerisi">🏠 İçerisi</option>
+          <option value="Bahçe">🌿 Bahçe</option>
+          <option value="Dışarısı">☀️ Dışarısı</option>
         </select>
         <button class="btn btn-primary" style="margin-top: 10px;" onclick="addNewTable()">Masayı Kaydet</button>
       </div>
