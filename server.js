@@ -499,6 +499,247 @@ app.get('/api/reports/daily', async (req, res) => {
   }
 });
 
+// ---------------- ESNAF & ÇETELE / VERESİYE ENDPOINTS ----------------
+
+// Tüm Esnafları Listele
+app.get('/api/merchants', async (req, res) => {
+  try {
+    const merchants = await all(`
+      SELECT m.*,
+        (SELECT COUNT(*) FROM merchant_transactions WHERE merchant_id = m.id) as tx_count,
+        (SELECT MAX(created_at) FROM merchant_transactions WHERE merchant_id = m.id) as last_tx_time
+      FROM merchants m
+      ORDER BY m.balance DESC, m.name ASC
+    `);
+    res.json({ success: true, data: merchants });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Esnaf Genel İstatistik Özeti
+app.get('/api/merchants/summary', async (req, res) => {
+  try {
+    const totalBalance = await get('SELECT COALESCE(SUM(balance), 0) as total_debt, COUNT(*) as merchant_count FROM merchants');
+    const todayOrders = await get(`
+      SELECT COALESCE(SUM(amount), 0) as today_orders_amount, COUNT(*) as count 
+      FROM merchant_transactions 
+      WHERE type = 'order' AND date(created_at) = date('now', 'localtime')
+    `);
+    const todayPayments = await get(`
+      SELECT COALESCE(SUM(amount), 0) as today_collected_amount, COUNT(*) as count 
+      FROM merchant_transactions 
+      WHERE type = 'payment' AND date(created_at) = date('now', 'localtime')
+    `);
+
+    res.json({
+      success: true,
+      summary: {
+        total_debt: totalBalance.total_debt,
+        merchant_count: totalBalance.merchant_count,
+        today_orders: todayOrders.today_orders_amount,
+        today_payments: todayPayments.today_collected_amount
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Yeni Esnaf Ekle
+app.post('/api/merchants', async (req, res) => {
+  try {
+    const { name, shop_type, phone, notes, initial_balance } = req.body;
+    if (!name) return res.status(400).json({ success: false, error: 'Esnaf adı zorunludur' });
+
+    const balance = parseFloat(initial_balance) || 0;
+    const result = await run(
+      'INSERT INTO merchants (name, shop_type, phone, notes, balance) VALUES (?, ?, ?, ?, ?)',
+      [name, shop_type || 'Esnaf', phone || '', notes || '', balance]
+    );
+
+    const newId = result.lastID;
+    if (balance > 0) {
+      await run(
+        "INSERT INTO merchant_transactions (merchant_id, type, amount, description, waiter_name, created_at) VALUES (?, 'order', ?, 'Açılış Bakiyesi', 'Kasa', datetime('now', 'localtime'))",
+        [newId, balance]
+      );
+    }
+
+    io.emit('merchants_changed');
+    res.json({ success: true, id: newId });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Esnaf Bilgisi Güncelle
+app.put('/api/merchants/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, shop_type, phone, notes } = req.body;
+    if (!name) return res.status(400).json({ success: false, error: 'Esnaf adı zorunludur' });
+
+    await run(
+      'UPDATE merchants SET name = ?, shop_type = ?, phone = ?, notes = ? WHERE id = ?',
+      [name, shop_type || 'Esnaf', phone || '', notes || '', id]
+    );
+
+    io.emit('merchants_changed');
+    res.json({ success: true, message: 'Esnaf bilgisi güncellendi' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Esnaf Sil
+app.delete('/api/merchants/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await run('DELETE FROM merchant_transactions WHERE merchant_id = ?', [id]);
+    await run('DELETE FROM merchants WHERE id = ?', [id]);
+
+    io.emit('merchants_changed');
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Esnafın Hareket Geçmişi (Çetele & Tahsilat Listesi)
+app.get('/api/merchants/:id/transactions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const merchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    if (!merchant) return res.status(404).json({ success: false, error: 'Esnaf bulunamadı' });
+
+    const transactions = await all(`
+      SELECT * FROM merchant_transactions 
+      WHERE merchant_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT 100
+    `, [id]);
+
+    res.json({ success: true, merchant, transactions });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Esnafa Hızlı Çetele / Sipariş Yazma
+app.post('/api/merchants/:id/order', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { items, notify_kitchen, waiter_name, note } = req.body;
+
+    const merchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    if (!merchant) return res.status(404).json({ success: false, error: 'Esnaf bulunamadı' });
+
+    if (!items || !items.length) {
+      return res.status(400).json({ success: false, error: 'En az bir ürün eklenmelidir' });
+    }
+
+    let orderTotal = 0;
+    const itemSummaries = [];
+
+    for (const it of items) {
+      const lineTotal = (parseFloat(it.unit_price) * parseInt(it.quantity));
+      orderTotal += lineTotal;
+      itemSummaries.push(`${it.quantity}x ${it.product_name}`);
+    }
+
+    const description = itemSummaries.join(', ') + (note ? ` (${note})` : '');
+
+    // Bakiyeyi artır
+    await run('UPDATE merchants SET balance = balance + ? WHERE id = ?', [orderTotal, id]);
+
+    // Hareketi kaydet
+    await run(`
+      INSERT INTO merchant_transactions (merchant_id, type, amount, description, waiter_name, created_at)
+      VALUES (?, 'order', ?, ?, ?, datetime('now', 'localtime'))
+    `, [id, orderTotal, description, waiter_name || 'Esnaf Paneli']);
+
+    // Eğer ocağa iletilsin istenmişse (Ocak ekranına sesli ve canlı düşsün!)
+    if (notify_kitchen) {
+      const orderResult = await run(`
+        INSERT INTO orders (table_id, table_name, waiter_name, status, total_amount, created_at, updated_at)
+        VALUES (?, ?, ?, 'pending', ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
+      `, [0, `[Esnaf] ${merchant.name}`, waiter_name || 'Esnaf Paneli', orderTotal]);
+
+      const orderId = orderResult.lastID;
+      for (const it of items) {
+        await run(`
+          INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, note, status)
+          VALUES (?, ?, ?, ?, ?, ?, 'pending')
+        `, [orderId, it.product_id || null, it.product_name, it.quantity, it.unit_price, note || '']);
+      }
+
+      const fullOrder = await get('SELECT * FROM orders WHERE id = ?', [orderId]);
+      fullOrder.items = await all('SELECT * FROM order_items WHERE order_id = ?', [orderId]);
+
+      io.emit('new_order', fullOrder);
+    }
+
+    io.emit('merchants_changed');
+
+    const updatedMerchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    res.json({
+      success: true,
+      merchant: updatedMerchant,
+      orderTotal,
+      message: `${merchant.name} hesabına ${orderTotal.toFixed(2)} ₺ çetele işlendi.`
+    });
+  } catch (error) {
+    console.error('Esnaf çetele hatası:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Esnaftan Tahsilat Alma (Ödeme Alma)
+app.post('/api/merchants/:id/pay', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, payment_type, waiter_name, note } = req.body;
+
+    const payAmount = parseFloat(amount);
+    if (isNaN(payAmount) || payAmount <= 0) {
+      return res.status(400).json({ success: false, error: 'Geçerli bir ödeme tutarı girin' });
+    }
+
+    const merchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    if (!merchant) return res.status(404).json({ success: false, error: 'Esnaf bulunamadı' });
+
+    // Bakiyeden düş
+    await run('UPDATE merchants SET balance = balance - ? WHERE id = ?', [payAmount, id]);
+
+    // Hareketi kaydet
+    const desc = (note ? note + ' ' : '') + `(${payment_type === 'kart' ? 'Kredi Kartı' : 'Nakit'} Tahsilat)`;
+    await run(`
+      INSERT INTO merchant_transactions (merchant_id, type, amount, description, payment_type, waiter_name, created_at)
+      VALUES (?, 'payment', ?, ?, ?, ?, datetime('now', 'localtime'))
+    `, [id, payAmount, desc, payment_type || 'nakit', waiter_name || 'Kasa']);
+
+    // Kasaya / Ciroya dahil et (payments tablosuna ekle!)
+    await run(`
+      INSERT INTO payments (table_id, table_name, amount, payment_type, waiter_name, created_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    `, [0, `[Esnaf] ${merchant.name}`, payAmount, payment_type || 'nakit', waiter_name || 'Kasa']);
+
+    io.emit('merchants_changed');
+    io.emit('table_paid', { tableId: 0, tableName: `[Esnaf] ${merchant.name}`, amount: payAmount });
+
+    const updatedMerchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    res.json({
+      success: true,
+      merchant: updatedMerchant,
+      message: `${merchant.name} esnafından ${payAmount.toFixed(2)} ₺ tahsilat alındı.`
+    });
+  } catch (error) {
+    console.error('Esnaf tahsilat hatası:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ---------------- WEBSOCKET ----------------
 io.on('connection', (socket) => {
   console.log(`[Socket] Yeni istemci bağlandı: ${socket.id}`);

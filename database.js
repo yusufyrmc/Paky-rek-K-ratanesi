@@ -91,6 +91,56 @@ async function initDatabase() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // Esnaf & Veresiye / Çetele Tabloları
+  await run(`CREATE TABLE IF NOT EXISTS merchants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    shop_type TEXT DEFAULT 'Esnaf', -- Berber, Terzi, Kasap, Eczane, Taksi vb.
+    phone TEXT,
+    notes TEXT,
+    balance REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  await run(`CREATE TABLE IF NOT EXISTS merchant_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    merchant_id INTEGER NOT NULL,
+    type TEXT NOT NULL, -- 'order' (borç ekleme) veya 'payment' (tahsilat alma)
+    amount REAL NOT NULL,
+    description TEXT,
+    payment_type TEXT DEFAULT 'nakit', -- nakit, kart
+    waiter_name TEXT DEFAULT 'Kasa',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(merchant_id) REFERENCES merchants(id) ON DELETE CASCADE
+  )`);
+
+  // Başlangıç Esnafları kontrol et
+  const merchantCount = await get('SELECT COUNT(*) as count FROM merchants');
+  if (merchantCount.count === 0) {
+    console.log('Başlangıç çevre esnafları ekleniyor...');
+    const initialMerchants = [
+      { name: 'Berber Ahmet', shop_type: 'Berber', phone: '0555 111 2233', notes: 'Çarşı İçi No: 4', balance: 140 },
+      { name: 'Terzi Mehmet Usta', shop_type: 'Terzi', phone: '0555 222 3344', notes: 'Pasaj İçi Kat 1', balance: 90 },
+      { name: 'Kasap Veli', shop_type: 'Kasap', phone: '0555 333 4455', notes: 'Köşe Dükkan', balance: 250 },
+      { name: 'Merkez Eczanesi', shop_type: 'Eczane', phone: '0555 444 5566', notes: 'Sağlık Ocağı Karşısı', balance: 60 },
+      { name: 'Meydan Taksi Durağı', shop_type: 'Taksi', phone: '0555 555 6677', notes: 'Durağın İçi', balance: 180 }
+    ];
+
+    for (const m of initialMerchants) {
+      const res = await run(
+        'INSERT INTO merchants (name, shop_type, phone, notes, balance) VALUES (?, ?, ?, ?, ?)',
+        [m.name, m.shop_type, m.phone, m.notes, m.balance]
+      );
+      // Başlangıç çetele hareketi
+      if (m.balance > 0) {
+        await run(
+          "INSERT INTO merchant_transactions (merchant_id, type, amount, description, waiter_name, created_at) VALUES (?, 'order', ?, 'Açılış Çetele Bakiyesi', 'Sistem', datetime('now', 'localtime'))",
+          [res.lastID, m.balance]
+        );
+      }
+    }
+  }
+
   // Başlangıç Kategorileri ve Ürünleri kontrol et
   const catCount = await get('SELECT COUNT(*) as count FROM categories');
   if (catCount.count === 0) {

@@ -22,14 +22,20 @@
         <span>☕</span> Pakyürek Garson
       </div>
 
-      <div class="waiter-selector-box">
-        <span>👤</span>
-        <select id="waiterSelect" class="waiter-select" onchange="onWaiterChange()">
-          <option value="Yusuf">Yusuf</option>
-          <option value="Muhammed">Muhammed</option>
-          <option value="Mehmet Salih">Mehmet Salih</option>
-          <option value="Ahmet">Ahmet</option>
-        </select>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <a href="esnaf.html" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem; text-decoration: none; border-radius: 6px; color: var(--primary);" title="Esnaf & Çetele Paneli">
+          🏬 Esnaf
+        </a>
+
+        <div class="waiter-selector-box">
+          <span>👤</span>
+          <select id="waiterSelect" class="waiter-select" onchange="onWaiterChange()">
+            <option value="Yusuf">Yusuf</option>
+            <option value="Muhammed">Muhammed</option>
+            <option value="Mehmet Salih">Mehmet Salih</option>
+            <option value="Ahmet">Ahmet</option>
+          </select>
+        </div>
       </div>
     </div>
 
