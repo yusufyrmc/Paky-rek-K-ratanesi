@@ -708,6 +708,204 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
+// ================= ESNAF YÖNETİMİ (EKLE & SİL) =================
+let kasaMerchantsData = [];
+
+function openManageMerchantsModal() {
+  document.getElementById('manageMerchantsModal').classList.add('active');
+  const searchInput = document.getElementById('kasaSearchMerchantInput');
+  if (searchInput) searchInput.value = '';
+  loadKasaMerchants();
+}
+
+function closeManageMerchantsModal() {
+  document.getElementById('manageMerchantsModal').classList.remove('active');
+}
+
+async function loadKasaMerchants() {
+  const container = document.getElementById('kasaMerchantsList');
+  if (container) {
+    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">Esnaflar yükleniyor...</div>';
+  }
+
+  try {
+    const res = await fetch('/api/merchants');
+    const data = await res.json();
+    if (data.success) {
+      kasaMerchantsData = data.data || [];
+      kasaFilterMerchantsList();
+    } else {
+      if (container) container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px;">Esnaflar alınamadı!</div>';
+    }
+  } catch (err) {
+    console.error('Kasa esnaf verileri yüklenemedi:', err);
+    if (container) container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px;">Bağlantı hatası!</div>';
+  }
+}
+
+function getMerchantTypeIcon(type) {
+  const t = (type || '').toLowerCase();
+  if (t.includes('berber') || t.includes('kuaför')) return '✂️';
+  if (t.includes('terzi')) return '🧵';
+  if (t.includes('kasap')) return '🥩';
+  if (t.includes('manav')) return '🍎';
+  if (t.includes('eczane')) return '💊';
+  if (t.includes('taksi')) return '🚕';
+  if (t.includes('kırtasiye')) return '📚';
+  if (t.includes('büfe') || t.includes('bakkal')) return '🥪';
+  if (t.includes('lokanta') || t.includes('kebap')) return '🍲';
+  if (t.includes('ayakkabı')) return '👞';
+  return '🏬';
+}
+
+function kasaFilterMerchantsList() {
+  const q = (document.getElementById('kasaSearchMerchantInput')?.value || '').trim().toLowerCase();
+  if (!q) {
+    renderKasaMerchants(kasaMerchantsData);
+    return;
+  }
+
+  const filtered = kasaMerchantsData.filter(m => 
+    (m.name && m.name.toLowerCase().includes(q)) ||
+    (m.shop_type && m.shop_type.toLowerCase().includes(q)) ||
+    (m.phone && m.phone.toLowerCase().includes(q)) ||
+    (m.notes && m.notes.toLowerCase().includes(q))
+  );
+  renderKasaMerchants(filtered);
+}
+
+function renderKasaMerchants(list) {
+  const container = document.getElementById('kasaMerchantsList');
+  const countLabel = document.getElementById('kasaMerchantCountLabel');
+  if (!container) return;
+
+  if (countLabel) {
+    countLabel.textContent = `📋 Kayıtlı Esnaflar (${list.length} Esnaf)`;
+  }
+
+  if (!list || list.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-secondary); padding: 30px; background: rgba(255,255,255,0.02); border-radius: 8px;">
+        Kayıtlı esnaf bulunamadı. Yukarıdaki formdan yeni esnaf ekleyebilirsiniz.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(m => {
+    const icon = getMerchantTypeIcon(m.shop_type);
+    const balance = parseFloat(m.balance) || 0;
+    const isDebt = balance > 0;
+
+    return `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 8px; gap: 12px; transition: all 0.2s;">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
+          <div style="font-size: 1.6rem; line-height: 1; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px;">${icon}</div>
+          <div style="min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-weight: 700; color: #fff; font-size: 1rem;">${escapeHtml(m.name)}</span>
+              <span style="font-size: 0.75rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                ${escapeHtml(m.shop_type || 'Esnaf')}
+              </span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap;">
+              ${m.phone ? `<span>📞 ${escapeHtml(m.phone)}</span>` : ''}
+              ${m.notes ? `<span style="font-style: italic;">📝 ${escapeHtml(m.notes)}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="text-align: right;">
+            <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">Güncel Bakiye</div>
+            <div style="font-weight: 800; font-size: 1.15rem; ${isDebt ? 'color: #ef4444;' : 'color: #10b981;'}">
+              ${balance.toFixed(2)} ₺
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <a href="esnaf.html" class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem; text-decoration: none;" title="Esnaf Detayını & Çetelesini Aç">
+              📋 Çetele
+            </a>
+            <button class="btn btn-outline" style="padding: 6px 10px; color: #ef4444; border-color: rgba(239,68,68,0.5); font-size: 0.85rem;" onclick="kasaDeleteMerchant(${m.id}, '${escapeHtml(m.name)}')" title="Esnafı ve tüm kayıtlarını sil">
+              🗑️ Sil
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function kasaAddNewMerchant() {
+  const nameInput = document.getElementById('kasaNewMerchantName');
+  const typeInput = document.getElementById('kasaNewMerchantType');
+  const balanceInput = document.getElementById('kasaNewMerchantBalance');
+  const phoneInput = document.getElementById('kasaNewMerchantPhone');
+  const notesInput = document.getElementById('kasaNewMerchantNotes');
+
+  const name = nameInput.value.trim();
+  const shop_type = typeInput.value;
+  const initial_balance = parseFloat(balanceInput.value) || 0;
+  const phone = phoneInput.value.trim();
+  const notes = notesInput.value.trim();
+
+  if (!name) {
+    showToast('Lütfen esnaf adını veya dükkan ismini girin!', 'warning');
+    nameInput.focus();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/merchants', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        shop_type,
+        initial_balance,
+        phone,
+        notes
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🏬 "${name}" başarıyla eklendi!`, 'success');
+      nameInput.value = '';
+      balanceInput.value = '0';
+      phoneInput.value = '';
+      notesInput.value = '';
+      loadKasaMerchants();
+    } else {
+      showToast(data.error || 'Esnaf eklenemedi', 'danger');
+    }
+  } catch (err) {
+    console.error('Esnaf ekleme hatası:', err);
+    showToast('Bağlantı hatası oluştu', 'danger');
+  }
+}
+
+async function kasaDeleteMerchant(id, name) {
+  const confirmed = confirm(`"${name}" isimli esnafı silmek istediğinize emin misiniz?\n\n⚠️ Bu işlem esnafın tüm geçmiş çetele ve tahsilat kayıtlarını da silecektir!`);
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/merchants/${id}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🗑️ "${name}" esnafı ve verileri başarıyla silindi.`, 'info');
+      loadKasaMerchants();
+    } else {
+      showToast(data.error || 'Esnaf silinemedi', 'danger');
+    }
+  } catch (err) {
+    console.error('Esnaf silme hatası:', err);
+    showToast('Silme işlemi sırasında hata oluştu', 'danger');
+  }
+}
+
 // WebSocket
 function setupSocket() {
   socket = io({
@@ -739,6 +937,13 @@ function setupSocket() {
   socket.on('table_paid', () => {
     loadTables();
     loadDailyReports();
+  });
+
+  socket.on('merchants_changed', () => {
+    const modal = document.getElementById('manageMerchantsModal');
+    if (modal && modal.classList.contains('active')) {
+      loadKasaMerchants();
+    }
   });
 }
 

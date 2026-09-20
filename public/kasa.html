@@ -32,8 +32,11 @@
       <button class="btn btn-outline" onclick="loadAllData()" title="Yenile">
         🔄
       </button>
+      <button class="btn btn-outline" style="color: #38bdf8; border-color: #38bdf8;" onclick="openManageMerchantsModal()" title="Kasa Üzerinden Esnaf Ekle ve Sil">
+        🏬 Esnaf Ekle / Sil
+      </button>
       <a href="esnaf.html" class="btn btn-outline" title="Esnaf & Çetele Paneli">
-        🏬 Esnaf Paneli
+        📋 Esnaf Paneli
       </a>
       <a href="index.html" class="btn btn-outline" title="Ana Menü">
         🏠
@@ -315,6 +318,82 @@
           <!-- Hedef Masalar -->
         </select>
         <button class="btn btn-primary" style="margin-top: 10px;" onclick="confirmTransferTable()">Aktarımı Onayla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kasa Üzerinden Esnaf Yönetimi (Ekle & Sil) Modalı -->
+  <div class="modal-overlay" id="manageMerchantsModal">
+    <div class="modal-content" style="max-width: 740px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h3 style="color: #38bdf8; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <span>🏬</span> Esnaf Yönetimi (Ekle & Sil)
+        </h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeManageMerchantsModal()">✕</button>
+      </div>
+
+      <!-- Yeni Esnaf Ekleme Kartı -->
+      <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-color);">
+        <h4 style="color: #fff; margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+          <span>➕</span> Yeni Esnaf Ekle
+        </h4>
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Esnaf Adı / Dükkan İsmi *</label>
+            <input type="text" id="kasaNewMerchantName" placeholder="Örn: Berber Mehmet" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Sektör / Tür</label>
+            <select id="kasaNewMerchantType" style="width: 100%; padding: 8px 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+              <option value="Berber">✂️ Berber / Kuaför</option>
+              <option value="Terzi">🧵 Terzi</option>
+              <option value="Kasap">🥩 Kasap</option>
+              <option value="Manav">🍎 Manav</option>
+              <option value="Eczane">💊 Eczane</option>
+              <option value="Taksi">🚕 Taksici / Durak</option>
+              <option value="Kırtasiye">📚 Kırtasiye</option>
+              <option value="Büfe">🥪 Büfe / Bakkal</option>
+              <option value="Lokanta">🍲 Lokanta / Kebap</option>
+              <option value="Ayakkabıcı">👞 Ayakkabıcı</option>
+              <option value="Diğer" selected>🏬 Diğer Esnaf</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Açılış Bakiyesi (Borç ₺)</label>
+            <input type="number" id="kasaNewMerchantBalance" value="0" min="0" step="1" placeholder="0.00" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: flex-end;">
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Telefon (İsteğe bağlı)</label>
+            <input type="text" id="kasaNewMerchantPhone" placeholder="05xx xxx xx xx" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Not / Adres (İsteğe bağlı)</label>
+            <input type="text" id="kasaNewMerchantNotes" placeholder="Köşedeki dükkan..." style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+          <button class="btn btn-success" style="padding: 9px 20px; font-weight: 700; white-space: nowrap;" onclick="kasaAddNewMerchant()">
+            💾 Esnafı Kaydet
+          </button>
+        </div>
+      </div>
+
+      <!-- Kayıtlı Esnaflar ve Silme Listesi -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-weight: 700; color: #fff; font-size: 0.95rem;" id="kasaMerchantCountLabel">
+          📋 Kayıtlı Esnaflar
+        </span>
+        <input type="text" id="kasaSearchMerchantInput" placeholder="İsimle ara..." oninput="kasaFilterMerchantsList()" style="padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.85rem; width: 180px;">
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; max-height: 380px; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;" id="kasaMerchantsList">
+        <!-- Dinamik Esnaf Satırları -->
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.8rem; color: var(--text-secondary);">⚠️ Esnaf silindiğinde geçmiş sipariş ve tahsilat kayıtları da silinir.</span>
+        <button class="btn btn-outline" onclick="closeManageMerchantsModal()">Kapat</button>
       </div>
     </div>
   </div>
