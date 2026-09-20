@@ -226,15 +226,25 @@ function renderOrders() {
     let actionButtons = '';
     if (!isApproved) {
       actionButtons = `
-        <button class="btn btn-success" style="width: 100%; padding: 14px; font-size: 1.15rem; font-weight: 800; letter-spacing: 0.03em;" onclick="approveOrder(${order.id}, '${escapeHtml(order.table_name)}')">
-          ✓ SİPARİŞİ ONAYLA
-        </button>
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button class="btn btn-success" style="flex: 1; padding: 14px 10px; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.03em;" onclick="approveOrder(${order.id}, '${escapeHtml(order.table_name)}')">
+            ✓ SİPARİŞİ ONAYLA
+          </button>
+          <button class="btn btn-outline" style="padding: 14px 14px; border-color: #ef4444; color: #ef4444; font-weight: 700; font-size: 0.95rem; border-radius: var(--radius-sm);" onclick="cancelOrderPrompt(${order.id}, '${escapeHtml(order.table_name)}')" title="Siparişi İptal Et">
+            ✕ İptal
+          </button>
+        </div>
       `;
     } else {
       actionButtons = `
-        <button class="btn btn-outline" style="width: 100%; border-color: #10b981; color: #10b981; font-weight: 700; padding: 10px;" onclick="updateOrderStatus(${order.id}, 'pending')">
-          ✓ Onaylandı (Geri Al)
-        </button>
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button class="btn btn-outline" style="flex: 1; border-color: #10b981; color: #10b981; font-weight: 700; padding: 10px;" onclick="updateOrderStatus(${order.id}, 'pending')">
+            ✓ Onaylandı (Geri Al)
+          </button>
+          <button class="btn btn-outline" style="padding: 10px 14px; border-color: #ef4444; color: #ef4444; font-weight: 700; font-size: 0.95rem; border-radius: var(--radius-sm);" onclick="cancelOrderPrompt(${order.id}, '${escapeHtml(order.table_name)}')" title="Siparişi İptal Et">
+            ✕ İptal
+          </button>
+        </div>
       `;
     }
 
@@ -268,6 +278,38 @@ function renderOrders() {
 async function approveOrder(orderId, tableName) {
   await updateOrderStatus(orderId, 'approved');
   showToast(`✓ ${tableName || 'Masa'} siparişi onaylandı!`, 'success');
+}
+
+// Sipariş İptal Etme Fonksiyonu
+async function cancelOrderPrompt(orderId, tableName) {
+  const confirmCancel = confirm(`${tableName} masasının bu siparişini İPTAL ETMEK istediğinize emin misiniz?\n\nBu işlem siparişi ocak ekranından kaldıracak ve masanın açık adisyonundan da düşecektir.`);
+  if (!confirmCancel) return;
+
+  await cancelOrder(orderId, tableName);
+}
+
+async function cancelOrder(orderId, tableName) {
+  try {
+    const res = await fetch(`/api/orders/${orderId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'cancelled' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✕ ${tableName || 'Masa'} siparişi iptal edildi.`, 'warning');
+      const idx = allOrders.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        allOrders.splice(idx, 1);
+        renderOrders();
+      }
+    } else {
+      showToast('İptal edilemedi: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    console.error('İptal hatası:', err);
+    showToast('Bağlantı hatası oluştu', 'danger');
+  }
 }
 
 // Durum Güncelle

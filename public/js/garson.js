@@ -654,9 +654,12 @@ function setupSocket() {
     }
   });
 
-  // Ocakçı siparişi "ONAYLADI"ysa telefona uyarı düşsün!
+  // Ocakçı siparişi "ONAYLADI" veya "İPTAL ETTİ" ise telefona uyarı düşsün!
   socket.on('order_status_updated', (data) => {
-    if ((data.status === 'approved' || data.status === 'ready') && data.order) {
+    if (data.status === 'cancelled') {
+      if (navigator.vibrate) navigator.vibrate([150, 100, 150]);
+      showToast(`⚠️ ${data.order ? data.order.table_name : 'Masa'} siparişi ocak tarafından İPTAL EDİLDİ!`, 'danger');
+    } else if ((data.status === 'approved' || data.status === 'ready') && data.order) {
       if (navigator.vibrate) navigator.vibrate([100, 80, 100]);
       showToast(`✓ ${data.order.table_name} siparişi ocak tarafından ONAYLANDI!`, 'success');
     }

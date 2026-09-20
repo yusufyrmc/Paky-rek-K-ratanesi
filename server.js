@@ -342,6 +342,17 @@ app.put('/api/orders/:id/status', async (req, res) => {
     const updatedOrder = await get('SELECT * FROM orders WHERE id = ?', [id]);
     if (updatedOrder) {
       updatedOrder.items = await all('SELECT * FROM order_items WHERE order_id = ?', [id]);
+
+      // Eğer sipariş iptal edildiyse ve masada başka açık sipariş yoksa masayı 'empty' yap
+      if (status === 'cancelled' && updatedOrder.table_id > 0) {
+        const remainingOpen = await get(
+          "SELECT COUNT(*) as count FROM orders WHERE table_id = ? AND status != 'completed' AND status != 'cancelled'",
+          [updatedOrder.table_id]
+        );
+        if (remainingOpen.count === 0) {
+          await run("UPDATE tables SET status = 'empty' WHERE id = ?", [updatedOrder.table_id]);
+        }
+      }
     }
 
     // CANLI YAYIN: Durum değişikliğini herkese bildir
