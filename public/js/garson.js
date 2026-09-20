@@ -14,12 +14,132 @@ let selectedProduct = null;
 let modalQuantity = 1;
 let selectedNotes = new Set();
 
-// Garson Adı Yönetimi
-function initWaiter() {
-  const savedWaiter = localStorage.getItem('pakyurek_waiter_name');
+// Garson Adı & Garson Yönetimi
+let allWaiters = [];
+
+async function loadWaiters() {
+  try {
+    const res = await fetch('/api/waiters');
+    const data = await res.json();
+    if (data.success) {
+      allWaiters = data.data;
+      renderWaitersSelect();
+      renderWaitersModalList();
+    }
+  } catch (err) {
+    console.error('Garsonlar yüklenemedi:', err);
+  }
+}
+
+function renderWaitersSelect() {
   const select = document.getElementById('waiterSelect');
-  if (savedWaiter) {
+  if (!select) return;
+  const savedWaiter = localStorage.getItem('pakyurek_waiter_name');
+
+  if (allWaiters.length === 0) {
+    select.innerHTML = '<option value="Garson">Garson</option>';
+    return;
+  }
+
+  select.innerHTML = allWaiters.map(w => `
+    <option value="${escapeHtml(w.name)}">${escapeHtml(w.name)}</option>
+  `).join('');
+
+  if (savedWaiter && allWaiters.some(w => w.name === savedWaiter)) {
     select.value = savedWaiter;
+  } else if (allWaiters.length > 0) {
+    select.value = allWaiters[0].name;
+    localStorage.setItem('pakyurek_waiter_name', allWaiters[0].name);
+  }
+}
+
+function renderWaitersModalList() {
+  const container = document.getElementById('waitersListContainer');
+  const countLabel = document.getElementById('waiterCountLabel');
+  if (!container) return;
+
+  if (countLabel) {
+    countLabel.textContent = `📋 Kayıtlı Garsonlar (${allWaiters.length})`;
+  }
+
+  if (allWaiters.length === 0) {
+    container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 16px;">Kayıtlı garson bulunmuyor.</div>`;
+    return;
+  }
+
+  container.innerHTML = allWaiters.map(w => `
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 6px;">
+      <div style="font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+        <span>👤</span> ${escapeHtml(w.name)}
+      </div>
+      <button class="btn btn-outline" style="padding: 4px 10px; color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 0.8rem;" onclick="deleteWaiter(${w.id}, '${escapeHtml(w.name)}')">
+        🗑️ Sil
+      </button>
+    </div>
+  `).join('');
+}
+
+function openManageWaitersModal() {
+  const modal = document.getElementById('manageWaitersModal');
+  if (modal) {
+    modal.classList.add('active');
+    loadWaiters();
+    setTimeout(() => {
+      const input = document.getElementById('newWaiterInput');
+      if (input) { input.value = ''; input.focus(); }
+    }, 150);
+  }
+}
+
+function closeManageWaitersModal() {
+  const modal = document.getElementById('manageWaitersModal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function addNewWaiter() {
+  const input = document.getElementById('newWaiterInput');
+  const name = input ? input.value.trim() : '';
+
+  if (!name) {
+    showToast('Lütfen garson adını girin!', 'warning');
+    if (input) input.focus();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/waiters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`👤 "${name}" garson olarak eklendi!`, 'success');
+      if (input) input.value = '';
+      localStorage.setItem('pakyurek_waiter_name', name);
+      loadWaiters();
+    } else {
+      showToast(data.error || 'Garson eklenemedi', 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası oluştu', 'danger');
+  }
+}
+
+async function deleteWaiter(id, name) {
+  if (!confirm(`"${name}" isimli garsonu silmek istediğinize emin misiniz?`)) return;
+
+  try {
+    const res = await fetch(`/api/waiters/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🗑️ "${name}" silindi.`, 'info');
+      loadWaiters();
+    } else {
+      showToast(data.error || 'Garson silinemedi', 'danger');
+    }
+  } catch (err) {
+    showToast('Silme işlemi başarısız', 'danger');
   }
 }
 
@@ -30,7 +150,8 @@ function onWaiterChange() {
 }
 
 function getWaiterName() {
-  return document.getElementById('waiterSelect').value || 'Garson';
+  const sel = document.getElementById('waiterSelect');
+  return (sel && sel.value) ? sel.value : (localStorage.getItem('pakyurek_waiter_name') || 'Garson');
 }
 
 // Menü Verisini Yükle
@@ -700,11 +821,15 @@ function setupSocket() {
   socket.on('menu_changed', () => {
     loadMenu();
   });
+
+  socket.on('waiters_changed', () => {
+    loadWaiters();
+  });
 }
 
 // Başlangıç
 window.addEventListener('DOMContentLoaded', () => {
-  initWaiter();
+  loadWaiters();
   loadMenu();
   loadTables();
   setupSocket();

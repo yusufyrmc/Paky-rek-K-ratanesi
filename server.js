@@ -259,7 +259,7 @@ app.get('/api/orders/active', async (req, res) => {
           WHEN 'ready' THEN 3 
           WHEN 'approved' THEN 4
         END,
-        created_at ASC
+        created_at ASC, id ASC
     `);
 
     for (let order of orders) {
@@ -505,6 +505,57 @@ app.get('/api/reports/daily', async (req, res) => {
       topProducts,
       recentPayments
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ---------------- GARSON YÖNETİMİ ENDPOINTS ----------------
+
+// Tüm Garsonları Listele
+app.get('/api/waiters', async (req, res) => {
+  try {
+    const waiters = await all('SELECT * FROM waiters ORDER BY name ASC');
+    res.json({ success: true, data: waiters });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Yeni Garson Ekle
+app.post('/api/waiters', async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, error: 'Garson adı zorunludur' });
+    }
+
+    const trimmedName = name.trim();
+    const existing = await get('SELECT * FROM waiters WHERE LOWER(name) = LOWER(?)', [trimmedName]);
+    if (existing) {
+      return res.status(400).json({ success: false, error: 'Bu isimde bir garson zaten kayıtlı' });
+    }
+
+    const result = await run('INSERT INTO waiters (name) VALUES (?)', [trimmedName]);
+    io.emit('waiters_changed');
+    res.json({ success: true, id: result.lastID, name: trimmedName });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Garson Sil
+app.delete('/api/waiters/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const waiter = await get('SELECT * FROM waiters WHERE id = ?', [id]);
+    if (!waiter) {
+      return res.status(404).json({ success: false, error: 'Garson bulunamadı' });
+    }
+
+    await run('DELETE FROM waiters WHERE id = ?', [id]);
+    io.emit('waiters_changed');
+    res.json({ success: true, message: `${waiter.name} silindi` });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

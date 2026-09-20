@@ -65,8 +65,8 @@ async function initDatabase() {
     waiter_name TEXT NOT NULL,
     status TEXT DEFAULT 'pending', -- pending, preparing, ready, completed, cancelled
     total_amount REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
   )`);
 
   await run(`CREATE TABLE IF NOT EXISTS order_items (
@@ -113,6 +113,23 @@ async function initDatabase() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(merchant_id) REFERENCES merchants(id) ON DELETE CASCADE
   )`);
+
+  // Garsonlar Tablosu
+  await run(`CREATE TABLE IF NOT EXISTS waiters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT (datetime('now', 'localtime'))
+  )`);
+
+  // Başlangıç Garsonları kontrol et
+  const waiterCount = await get('SELECT COUNT(*) as count FROM waiters');
+  if (waiterCount.count === 0) {
+    console.log('Başlangıç garsonları ekleniyor...');
+    const defaultWaiters = ['Yusuf', 'Muhammed', 'Mehmet Salih', 'Ahmet'];
+    for (const w of defaultWaiters) {
+      await run('INSERT OR IGNORE INTO waiters (name) VALUES (?)', [w]);
+    }
+  }
 
   // Başlangıç Esnafları kontrol et
   const merchantCount = await get('SELECT COUNT(*) as count FROM merchants');

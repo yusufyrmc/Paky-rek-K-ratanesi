@@ -27,14 +27,12 @@
           🏬 Esnaf
         </a>
 
-        <div class="waiter-selector-box">
+        <div class="waiter-selector-box" style="display: flex; align-items: center; gap: 4px;">
           <span>👤</span>
           <select id="waiterSelect" class="waiter-select" onchange="onWaiterChange()">
-            <option value="Yusuf">Yusuf</option>
-            <option value="Muhammed">Muhammed</option>
-            <option value="Mehmet Salih">Mehmet Salih</option>
-            <option value="Ahmet">Ahmet</option>
+            <!-- Dinamik yüklenecek -->
           </select>
+          <button type="button" onclick="openManageWaitersModal()" title="Garson Ekle / Sil" style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 2px 6px; font-size: 1rem; border-radius: 4px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">⚙️</button>
         </div>
       </div>
     </div>
@@ -230,6 +228,40 @@
         <button class="btn btn-outline" style="flex: 1; padding: 12px;" onclick="closeGarsonRenameModal()">Vazgeç</button>
         <button class="btn btn-primary" style="flex: 1; padding: 12px; font-weight: 700;" onclick="saveGarsonRenameTable()">Kaydet</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 6. Garson Yönetimi (Ekle & Sil) Modalı -->
+  <div class="modal-overlay" id="manageWaitersModal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+        <h3 style="color: var(--primary); font-size: 1.25rem; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <span>👤</span> Garson Yönetimi
+        </h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeManageWaitersModal()">✕</button>
+      </div>
+
+      <!-- Yeni Garson Ekleme -->
+      <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-color);">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 6px;">➕ Yeni Garson Ekle:</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="newWaiterInput" placeholder="Garson Adı (Örn: Caner)"
+            onkeydown="if(event.key === 'Enter') addNewWaiter()"
+            style="flex: 1; padding: 10px; font-size: 0.95rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; outline: none;">
+          <button class="btn btn-success" onclick="addNewWaiter()" style="padding: 10px 16px; font-weight: 700; white-space: nowrap;">+ Ekle</button>
+        </div>
+      </div>
+
+      <!-- Mevcut Garsonlar Listesi -->
+      <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; font-size: 0.9rem; color: #fff;" id="waiterCountLabel">📋 Kayıtlı Garsonlar</span>
+      </div>
+
+      <div id="waitersListContainer" style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; padding-right: 4px;">
+        <!-- Dinamik garson satırları -->
+      </div>
+
+      <button class="btn btn-outline" style="width: 100%; padding: 10px;" onclick="closeManageWaitersModal()">Kapat</button>
     </div>
   </div>
 

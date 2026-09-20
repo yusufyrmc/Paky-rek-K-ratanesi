@@ -118,23 +118,83 @@ function showToast(message, type = 'info') {
   }, 4000);
 }
 
-// Süre Hesaplama (Örn: 2 dk önce)
-function getTimeAgo(dateString) {
-  const orderTime = new Date(dateString).getTime();
-  const now = new Date().getTime();
-  const diffSec = Math.floor((now - orderTime) / 1000);
+// Güvenli Tarih Ayrıştırma (Saat Dilimi & UTC/Local Farklarını Çözer)
+function parseOrderDate(dateString) {
+  if (!dateString) return new Date();
+  if (typeof dateString === 'number') return new Date(dateString);
 
-  if (diffSec < 45) return { text: 'Yeni geldi', isUrgent: false, isWarning: false };
-  const diffMin = Math.floor(diffSec / 60);
+  const str = String(dateString).trim();
+  const now = new Date();
+
+  // 1. Z veya saat farkı (+03:00 vb.) içeren standart ISO
+  if (str.includes('Z') || str.includes('+') || (str.includes('T') && str.split('T')[1].includes('-'))) {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? now : d;
+  }
+
+  // 2. "YYYY-MM-DD HH:MM:SS" -> "YYYY-MM-DDTHH:MM:SS"
+  const isoLike = str.replace(' ', 'T');
+  const dLocal = new Date(isoLike);
+  const dUtc = new Date(isoLike + 'Z');
+
+  if (isNaN(dLocal.getTime())) {
+    const fallback = new Date(str.replace(/-/g, '/'));
+    return isNaN(fallback.getTime()) ? now : fallback;
+  }
+
+  // 3. Saat farkı analizi (3 saatlik UTC / GMT+3 farkı kontrolü):
+  // SQLite UTC saatini 'YYYY-MM-DD HH:MM:SS' olarak kaydetmişse, dLocal şimdiki zamana göre ~3 saat (10800 sn) geride kalır.
+  // Ancak aynı dize UTC kabul edildiğinde (dUtc), aradaki fark dakikalar/saniyeler kadardır.
+  const diffSecLocal = (now.getTime() - dLocal.getTime()) / 1000;
+  const diffSecUtc = (now.getTime() - dUtc.getTime()) / 1000;
+
+  // Eğer dLocal 2 saatten fazla geride kalmışsa, ama dUtc çok taze ise (en fazla 2 saat önceki sipariş):
+  if (diffSecLocal >= 7200 && diffSecUtc >= -60 && diffSecUtc < 7200) {
+    return dUtc;
+  }
+
+  // Eğer dLocal -2 saatten fazla ilerideyse (ters yönde fark)
+  if (diffSecLocal < -7200 && diffSecUtc >= -60) {
+    return dUtc;
+  }
+
+  return dLocal;
+}
+
+// Süre Hesaplama (Gerçek Kaç Dakika Önce Geldiğini Gösterir)
+function getTimeAgo(dateString) {
+  const orderDate = parseOrderDate(dateString);
+  const now = new Date();
+  const diffSec = Math.floor((now.getTime() - orderDate.getTime()) / 1000);
+
+  // 45 saniyeden yeni ise
+  if (diffSec < 45) {
+    return { text: 'Yeni geldi', isUrgent: false, isWarning: false, minutes: 0 };
+  }
+
+  const diffMin = Math.max(1, Math.floor(diffSec / 60));
+
+  // 60 dakikadan az ise kaç dakika önce geldiğini göster
   if (diffMin < 60) {
     return {
       text: `${diffMin} dk önce`,
       isWarning: diffMin >= 3 && diffMin < 6,
-      isUrgent: diffMin >= 6
+      isUrgent: diffMin >= 6,
+      minutes: diffMin
     };
   }
-  const diffHours = Math.floor(diffMin / 60);
-  return { text: `${diffHours} sa önce`, isUrgent: true, isWarning: false };
+
+  // 60 dakika ve üzeri ise hem saat hem dakikayı net göster
+  const hours = Math.floor(diffMin / 60);
+  const remainMin = diffMin % 60;
+  const timeText = remainMin > 0 ? `${hours} sa ${remainMin} dk önce` : `${hours} sa önce`;
+
+  return {
+    text: timeText,
+    isUrgent: true,
+    isWarning: false,
+    minutes: diffMin
+  };
 }
 
 // Siparişleri API'den Çekme
@@ -191,6 +251,25 @@ function renderOrders() {
   } else {
     filtered = allOrders;
   }
+
+  // ESKİ GELENDEN YENİ GELENE DOĞRU SIRALAMA (İlk gelen ilk sırada / FIFO)
+  filtered.sort((a, b) => {
+    // 1. Durum önceliği: Bekleyenler (pending) üstte, onaylananlar (approved) altta
+    const statusPriority = { pending: 1, preparing: 2, ready: 3, approved: 4 };
+    const pA = statusPriority[a.status] || 99;
+    const pB = statusPriority[b.status] || 99;
+    if (pA !== pB) return pA - pB;
+
+    // 2. Zaman sıralaması: ESKİDEN YENİYE DOĞRU (En eski sipariş en üstte)
+    const tA = parseOrderDate(a.created_at).getTime();
+    const tB = parseOrderDate(b.created_at).getTime();
+    if (tA && tB && tA !== tB) {
+      return tA - tB; // tA < tB ise a üstte (eski sipariş)
+    }
+
+    // Zaman aynıysa küçük id (eski sipariş) üstte gelir
+    return (a.id || 0) - (b.id || 0);
+  });
 
   if (filtered.length === 0) {
     container.innerHTML = `
@@ -375,10 +454,10 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-// Her 15 saniyede bir süreleri güncelle (sayaç tazeleme)
+// Her 10 saniyede bir süreleri güncelle (dakika sayacını canlı tazele)
 setInterval(() => {
   renderOrders();
-}, 15000);
+}, 10000);
 
 // WebSocket Bağlantısı ve Olay Dinleyicileri
 function setupSocket() {
@@ -397,8 +476,14 @@ function setupSocket() {
     // Sesli çan çal
     playBellSound();
 
-    // Sipariş listesine ekle
-    allOrders.unshift(order);
+    // Sipariş listesine ekle (renderOrders içindeki sıralama eskiyi üstte, yeniyi altta tutar)
+    const existsIdx = allOrders.findIndex(o => o.id === order.id);
+    if (existsIdx === -1) {
+      allOrders.push(order);
+    } else {
+      allOrders[existsIdx] = order;
+    }
+
     renderOrders();
 
     // Görsel Toast Göster

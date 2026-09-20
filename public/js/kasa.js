@@ -906,6 +906,117 @@ async function kasaDeleteMerchant(id, name) {
   }
 }
 
+// ================= GARSON YÖNETİMİ (KASA) =================
+let kasaWaitersData = [];
+
+function openManageWaitersModal() {
+  document.getElementById('manageWaitersModal').classList.add('active');
+  const input = document.getElementById('kasaNewWaiterName');
+  if (input) { input.value = ''; input.focus(); }
+  loadKasaWaiters();
+}
+
+function closeManageWaitersModal() {
+  document.getElementById('manageWaitersModal').classList.remove('active');
+}
+
+async function loadKasaWaiters() {
+  const container = document.getElementById('kasaWaitersList');
+  const countLabel = document.getElementById('kasaWaitersCountLabel');
+  if (container) {
+    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 15px;">Garsonlar yükleniyor...</div>';
+  }
+
+  try {
+    const res = await fetch('/api/waiters');
+    const data = await res.json();
+    if (data.success) {
+      kasaWaitersData = data.data || [];
+      renderKasaWaiters();
+    } else {
+      if (container) container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 15px;">Garsonlar alınamadı!</div>';
+    }
+  } catch (err) {
+    if (container) container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 15px;">Bağlantı hatası!</div>';
+  }
+}
+
+function renderKasaWaiters() {
+  const container = document.getElementById('kasaWaitersList');
+  const countLabel = document.getElementById('kasaWaitersCountLabel');
+  if (!container) return;
+
+  if (countLabel) {
+    countLabel.textContent = `📋 Kayıtlı Garsonlar (${kasaWaitersData.length} Garson)`;
+  }
+
+  if (kasaWaitersData.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-secondary); padding: 20px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+        Kayıtlı garson bulunamadı. Yukarıdan yeni garson ekleyebilirsiniz.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = kasaWaitersData.map(w => `
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 8px;">
+      <div style="font-weight: 700; color: #fff; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.2rem;">👤</span> ${escapeHtml(w.name)}
+      </div>
+      <button class="btn btn-outline" style="padding: 5px 12px; color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 0.85rem;" onclick="kasaDeleteWaiter(${w.id}, '${escapeHtml(w.name)}')">
+        🗑️ Sil
+      </button>
+    </div>
+  `).join('');
+}
+
+async function kasaAddNewWaiter() {
+  const input = document.getElementById('kasaNewWaiterName');
+  const name = input ? input.value.trim() : '';
+
+  if (!name) {
+    showToast('Lütfen garson adını girin!', 'warning');
+    if (input) input.focus();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/waiters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`👤 "${name}" garson olarak eklendi!`, 'success');
+      if (input) input.value = '';
+      loadKasaWaiters();
+    } else {
+      showToast(data.error || 'Garson eklenemedi', 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası oluştu', 'danger');
+  }
+}
+
+async function kasaDeleteWaiter(id, name) {
+  if (!confirm(`"${name}" isimli garsonu silmek istediğinize emin misiniz?`)) return;
+
+  try {
+    const res = await fetch(`/api/waiters/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🗑️ "${name}" silindi.`, 'info');
+      loadKasaWaiters();
+    } else {
+      showToast(data.error || 'Garson silinemedi', 'danger');
+    }
+  } catch (err) {
+    showToast('Silme hatası oluştu', 'danger');
+  }
+}
+
 // WebSocket
 function setupSocket() {
   socket = io({
@@ -943,6 +1054,13 @@ function setupSocket() {
     const modal = document.getElementById('manageMerchantsModal');
     if (modal && modal.classList.contains('active')) {
       loadKasaMerchants();
+    }
+  });
+
+  socket.on('waiters_changed', () => {
+    const modal = document.getElementById('manageWaitersModal');
+    if (modal && modal.classList.contains('active')) {
+      loadKasaWaiters();
     }
   });
 }
