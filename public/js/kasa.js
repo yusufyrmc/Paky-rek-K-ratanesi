@@ -6,6 +6,26 @@ let selectedTable = null;
 let rawMenuData = [];
 let isRevenueHidden = localStorage.getItem('pakyurek_hide_revenue') === 'true';
 let latestDailySummary = { total: 0, nakit: 0, kart: 0, transaction_count: 0 };
+let currentKasaMobileTab = 'tables';
+
+// Mobil Sekmeler Arası Geçiş (Telefon / Tablet <992px)
+function switchKasaMobileTab(tab) {
+  currentKasaMobileTab = tab;
+  document.body.classList.remove('tab-tables', 'tab-receipt', 'tab-reports');
+  document.body.classList.add(`tab-${tab}`);
+
+  const tabTables = document.getElementById('tabBtnTables');
+  const tabReceipt = document.getElementById('tabBtnReceipt');
+  const tabReports = document.getElementById('tabBtnReports');
+
+  if (tabTables) tabTables.className = tab === 'tables' ? 'kasa-tab-btn active' : 'kasa-tab-btn';
+  if (tabReceipt) tabReceipt.className = tab === 'receipt' ? 'kasa-tab-btn active' : 'kasa-tab-btn';
+  if (tabReports) tabReports.className = tab === 'reports' ? 'kasa-tab-btn active' : 'kasa-tab-btn';
+
+  if (tab === 'tables') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
 
 // Tüm Verileri Yükle
 async function loadAllData() {
@@ -68,6 +88,8 @@ function renderTablesGrid() {
 
   const occupiedCount = allTables.filter(t => t.status === 'occupied' || t.current_total > 0).length;
   document.getElementById('occupiedCountLabel').textContent = `Dolu Masalar: ${occupiedCount} / ${allTables.length}`;
+  const mobileOccEl = document.getElementById('mobileOccupiedCount');
+  if (mobileOccEl) mobileOccEl.textContent = occupiedCount;
 
   container.innerHTML = filtered.map(t => {
     const isOccupied = t.status === 'occupied' || t.current_total > 0;
@@ -103,6 +125,13 @@ async function selectKasaTable(table) {
   document.getElementById('receiptTableName').textContent = table.name;
   document.getElementById('btnRenameTable').style.display = 'inline-flex';
   document.getElementById('btnTransferTable').style.display = (table.status === 'occupied' || table.current_total > 0) ? 'inline-flex' : 'none';
+
+  const mobileActiveBadge = document.getElementById('mobileActiveTableBadge');
+  if (mobileActiveBadge) mobileActiveBadge.textContent = table.name;
+
+  if (window.innerWidth < 992) {
+    switchKasaMobileTab('receipt');
+  }
 
   try {
     const res = await fetch(`/api/tables/${table.id}/orders`);
@@ -230,6 +259,11 @@ function deselectTable() {
   document.getElementById('receiptItemsList').innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 30px;">Masaya tıklayarak açık adisyonu görebilir ve ödeme alabilirsiniz.</div>`;
   document.getElementById('receiptActions').style.display = 'none';
   document.getElementById('btnTransferTable').style.display = 'none';
+  const mobileActiveBadge = document.getElementById('mobileActiveTableBadge');
+  if (mobileActiveBadge) mobileActiveBadge.textContent = '';
+  if (window.innerWidth < 992) {
+    switchKasaMobileTab('tables');
+  }
   renderTablesGrid();
 }
 
@@ -1339,6 +1373,7 @@ async function resetSelectedTeaPrices() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  switchKasaMobileTab('tables');
   loadAllData();
   setupSocket();
 });
