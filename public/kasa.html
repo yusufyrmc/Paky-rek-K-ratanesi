@@ -50,19 +50,6 @@
     </div>
   </header>
 
-  <!-- Mobil Sekme Barı (Sadece Telefonda / <992px Görünür) -->
-  <nav class="kasa-mobile-nav" id="kasaMobileNav">
-    <button class="kasa-tab-btn active" id="tabBtnTables" onclick="switchKasaMobileTab('tables')">
-      🪑 Masalar (<span id="mobileOccupiedCount">0</span>)
-    </button>
-    <button class="kasa-tab-btn" id="tabBtnReceipt" onclick="switchKasaMobileTab('receipt')">
-      📋 Masa Hesabı <span id="mobileActiveTableBadge" class="mobile-active-badge"></span>
-    </button>
-    <button class="kasa-tab-btn" id="tabBtnReports" onclick="switchKasaMobileTab('reports')">
-      📊 Kasa Raporu
-    </button>
-  </nav>
-
   <div class="kasa-container">
 
     <!-- SOL BÖLÜM: MASALAR VE ADİSYON DETAYI -->
@@ -87,14 +74,9 @@
       <!-- SEÇİLİ MASA ADİSYON KUTUSU -->
       <div class="receipt-box" id="selectedTableBox">
         <div class="receipt-head">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button class="btn btn-outline mobile-back-to-tables-btn" onclick="switchKasaMobileTab('tables')" title="Masalara Geri Dön">
-              ← Masalar
-            </button>
-            <div>
-              <h3 id="receiptTableName" style="font-size: 1.4rem; color: #fff; line-height: 1.2;">Masa Seçiniz</h3>
-              <span style="font-size: 0.85rem; color: var(--text-secondary);" id="receiptTableStatus">Detayları görmek için masaya tıklayın</span>
-            </div>
+          <div>
+            <h3 id="receiptTableName" style="font-size: 1.4rem; color: #fff;">Masa Seçiniz</h3>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);" id="receiptTableStatus">Detayları görmek için masaya tıklayın</span>
           </div>
 
           <div class="receipt-head-actions">
@@ -103,6 +85,9 @@
             </button>
             <button class="btn btn-outline" id="btnTransferTable" style="padding: 6px 12px; font-size: 0.85rem; display: none;" onclick="openTransferModal()">
               🔀 Masayı Aktar
+            </button>
+            <button class="btn btn-outline" id="btnDeleteTable" style="padding: 6px 12px; font-size: 0.85rem; display: none; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="deleteSelectedTable()">
+              🗑️ Masayı Sil
             </button>
           </div>
         </div>
@@ -323,7 +308,10 @@
           </div>
         </div>
 
-        <button class="btn btn-success" style="margin-top: 6px; padding: 12px; font-weight: 700;" onclick="saveRenameTable()">Ayarları Kaydet</button>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button class="btn btn-success" style="flex: 2; padding: 12px; font-weight: 700;" onclick="saveRenameTable()">💾 Ayarları Kaydet</button>
+          <button class="btn btn-danger" style="flex: 1; padding: 12px; font-weight: 700; background: rgba(239,68,68,0.18); border: 1px solid #ef4444; color: #ef4444;" onclick="deleteSelectedTable()">🗑️ Masayı Sil</button>
+        </div>
       </div>
     </div>
   </div>

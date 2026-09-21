@@ -41,6 +41,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 * {
@@ -55,6 +57,7 @@ body {
   background-color: var(--bg-main);
   color: var(--text-primary);
   min-height: 100vh;
+  max-width: 100%;
   overflow-x: hidden;
   position: relative;
   padding-left: env(safe-area-inset-left);

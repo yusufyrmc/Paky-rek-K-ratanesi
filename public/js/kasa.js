@@ -6,26 +6,6 @@ let selectedTable = null;
 let rawMenuData = [];
 let isRevenueHidden = localStorage.getItem('pakyurek_hide_revenue') === 'true';
 let latestDailySummary = { total: 0, nakit: 0, kart: 0, transaction_count: 0 };
-let currentKasaMobileTab = 'tables';
-
-// Mobil Sekmeler Arası Geçiş (Telefon / Tablet <992px)
-function switchKasaMobileTab(tab) {
-  currentKasaMobileTab = tab;
-  document.body.classList.remove('tab-tables', 'tab-receipt', 'tab-reports');
-  document.body.classList.add(`tab-${tab}`);
-
-  const tabTables = document.getElementById('tabBtnTables');
-  const tabReceipt = document.getElementById('tabBtnReceipt');
-  const tabReports = document.getElementById('tabBtnReports');
-
-  if (tabTables) tabTables.className = tab === 'tables' ? 'kasa-tab-btn active' : 'kasa-tab-btn';
-  if (tabReceipt) tabReceipt.className = tab === 'receipt' ? 'kasa-tab-btn active' : 'kasa-tab-btn';
-  if (tabReports) tabReports.className = tab === 'reports' ? 'kasa-tab-btn active' : 'kasa-tab-btn';
-
-  if (tab === 'tables') {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-}
 
 // Tüm Verileri Yükle
 async function loadAllData() {
@@ -124,14 +104,8 @@ async function selectKasaTable(table) {
 
   document.getElementById('receiptTableName').textContent = table.name;
   document.getElementById('btnRenameTable').style.display = 'inline-flex';
+  document.getElementById('btnDeleteTable').style.display = 'inline-flex';
   document.getElementById('btnTransferTable').style.display = (table.status === 'occupied' || table.current_total > 0) ? 'inline-flex' : 'none';
-
-  const mobileActiveBadge = document.getElementById('mobileActiveTableBadge');
-  if (mobileActiveBadge) mobileActiveBadge.textContent = table.name;
-
-  if (window.innerWidth < 992) {
-    switchKasaMobileTab('receipt');
-  }
 
   try {
     const res = await fetch(`/api/tables/${table.id}/orders`);
@@ -258,13 +232,44 @@ function deselectTable() {
   document.getElementById('receiptTableStatus').textContent = 'Detayları görmek için masaya tıklayın';
   document.getElementById('receiptItemsList').innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 30px;">Masaya tıklayarak açık adisyonu görebilir ve ödeme alabilirsiniz.</div>`;
   document.getElementById('receiptActions').style.display = 'none';
+  document.getElementById('btnRenameTable').style.display = 'none';
+  document.getElementById('btnDeleteTable').style.display = 'none';
   document.getElementById('btnTransferTable').style.display = 'none';
-  const mobileActiveBadge = document.getElementById('mobileActiveTableBadge');
-  if (mobileActiveBadge) mobileActiveBadge.textContent = '';
-  if (window.innerWidth < 992) {
-    switchKasaMobileTab('tables');
-  }
   renderTablesGrid();
+}
+
+// Seçili Masayı Sil
+async function deleteSelectedTable() {
+  if (!selectedTable) return;
+  const table = selectedTable;
+
+  if (table.status === 'occupied' || table.current_total > 0) {
+    const proceed = confirm(
+      `⚠️ DİKKAT: "${table.name}" masasında ${formatPrice(table.current_total || 0)} tutarında AÇIK HESAP var!\n\n` +
+      `Masayı silerseniz adisyon veritabanından silinir.\n` +
+      `Yine de "${table.name}" masasını tamamen silmek istiyor musunuz?`
+    );
+    if (!proceed) return;
+  } else {
+    const proceed = confirm(`"${table.name}" masasını kalıcı olarak silmek istediğinize emin misiniz?`);
+    if (!proceed) return;
+  }
+
+  try {
+    const res = await fetch(`/api/tables/${table.id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`"${table.name}" masası silindi`, 'success');
+      closeRenameModal();
+      deselectTable();
+      await loadTables();
+    } else {
+      showToast('Masa silinemedi: ' + (data.error || 'Hata oluştu'), 'danger');
+    }
+  } catch (err) {
+    console.error('Masa silme hatası:', err);
+    showToast('Bağlantı hatası: Masa silinemedi', 'danger');
+  }
 }
 
 // Masanın Hesabını Kapat (Ödeme Al)
@@ -1373,7 +1378,6 @@ async function resetSelectedTeaPrices() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  switchKasaMobileTab('tables');
   loadAllData();
   setupSocket();
 });
