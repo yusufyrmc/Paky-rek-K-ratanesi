@@ -72,13 +72,15 @@ function renderTablesGrid() {
   container.innerHTML = filtered.map(t => {
     const isOccupied = t.status === 'occupied' || t.current_total > 0;
     const isSelected = selectedTable && selectedTable.id === t.id;
+    const hasSpecialTea = t.custom_tea_price != null && t.custom_tea_price > 0;
 
     return `
       <div class="kasa-table-card ${isOccupied ? 'occupied' : 'empty'} ${isSelected ? 'active-selected' : ''}" onclick="selectKasaTableById(${t.id})">
         <div style="display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%;">
           <span style="font-size: 1.15rem; font-weight: 800; color: #fff;">${escapeHtml(t.name)}</span>
-          <span style="font-size: 0.8rem; cursor: pointer; opacity: 0.7;" onclick="event.stopPropagation(); quickRenameTable(${t.id}, '${escapeHtml(t.name)}')" title="İsim / No Değiştir">✏️</span>
+          <span style="font-size: 0.8rem; cursor: pointer; opacity: 0.7;" onclick="event.stopPropagation(); quickRenameTable(${t.id}, '${escapeHtml(t.name)}')" title="Masa Ayarlarını Düzenle">✏️</span>
         </div>
+        ${hasSpecialTea ? `<span style="font-size: 0.72rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1px 6px; border-radius: 4px; font-weight: 800; margin: 2px 0;">☕ ${t.custom_tea_price.toFixed(0)} ₺</span>` : ''}
         <div class="amount-tag" style="${isOccupied ? 'color: #ef4444; font-size: 1.25rem; font-weight: 800;' : 'color: var(--text-muted); font-size: 0.85rem;'}">
           ${isOccupied ? `${t.current_total.toFixed(2)} ₺` : '0.00 ₺ (Boş)'}
         </div>
@@ -164,10 +166,12 @@ function renderReceiptDetails(data) {
   }).join('');
 }
 
-// Masa İsim / Numara Değiştirme Fonksiyonları
+// Masa İsim / Numara / Çay Fiyatı Değiştirme Fonksiyonları
 function openRenameModal() {
   if (!selectedTable) return;
   document.getElementById('renameTableInput').value = selectedTable.name;
+  const teaInput = document.getElementById('renameTableTeaPriceInput');
+  if (teaInput) teaInput.value = (selectedTable.custom_tea_price != null) ? selectedTable.custom_tea_price : '';
   document.getElementById('renameModal').classList.add('active');
   document.getElementById('renameTableInput').focus();
 }
@@ -176,6 +180,8 @@ function quickRenameTable(id, currentName) {
   const table = allTables.find(t => t.id === id);
   if (table) selectedTable = table;
   document.getElementById('renameTableInput').value = currentName;
+  const teaInput = document.getElementById('renameTableTeaPriceInput');
+  if (teaInput) teaInput.value = (table && table.custom_tea_price != null) ? table.custom_tea_price : '';
   document.getElementById('renameModal').classList.add('active');
   document.getElementById('renameTableInput').focus();
 }
@@ -192,15 +198,21 @@ async function saveRenameTable() {
     return;
   }
 
+  const teaPriceVal = document.getElementById('renameTableTeaPriceInput').value.trim();
+  const customTeaPrice = teaPriceVal !== '' ? parseFloat(teaPriceVal) : null;
+
   try {
     const res = await fetch(`/api/tables/${selectedTable.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName })
+      body: JSON.stringify({ 
+        name: newName,
+        custom_tea_price: customTeaPrice
+      })
     });
     const data = await res.json();
     if (data.success) {
-      showToast(`Masa adı "${newName}" olarak güncellendi!`, 'success');
+      showToast(`Masa ayarları güncellendi!`, 'success');
       closeRenameModal();
       loadTables();
     } else {
@@ -655,6 +667,9 @@ function closeAddTableModal() {
 async function addNewTable() {
   const name = document.getElementById('newTableName').value.trim();
   const section = document.getElementById('newTableSection').value;
+  const teaPriceVal = document.getElementById('newTableTeaPrice').value.trim();
+  const customTeaPrice = teaPriceVal !== '' ? parseFloat(teaPriceVal) : null;
+
   if (!name) {
     showToast('Masa adı giriniz!', 'warning');
     return;
@@ -664,12 +679,13 @@ async function addNewTable() {
     const res = await fetch('/api/tables', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, section })
+      body: JSON.stringify({ name, section, custom_tea_price: customTeaPrice })
     });
     const data = await res.json();
     if (data.success) {
       showToast(`${name} masası oluşturuldu!`, 'success');
       document.getElementById('newTableName').value = '';
+      document.getElementById('newTableTeaPrice').value = '';
       closeAddTableModal();
       loadTables();
     }
@@ -798,7 +814,7 @@ function renderKasaMerchants(list) {
     const isDebt = balance > 0;
 
     return `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 8px; gap: 12px; transition: all 0.2s;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 8px; gap: 12px; transition: all 0.2s; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
           <div style="font-size: 1.6rem; line-height: 1; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px;">${icon}</div>
           <div style="min-width: 0;">
@@ -1043,6 +1059,10 @@ function setupSocket() {
 
   socket.on('tables_changed', () => {
     loadTables();
+    const teaModal = document.getElementById('customTeaPriceModal');
+    if (teaModal && teaModal.classList.contains('active')) {
+      renderCustomTeaPriceList();
+    }
   });
 
   socket.on('table_paid', () => {
@@ -1063,6 +1083,214 @@ function setupSocket() {
       loadKasaWaiters();
     }
   });
+}
+
+// ================= MASALARA ÖZEL ÇAY FİYATI (10 TL) YÖNETİMİ =================
+let isFilterOnlySpecialTea = false;
+
+function openCustomTeaPriceModal() {
+  document.getElementById('customTeaPriceModal').classList.add('active');
+  const searchInput = document.getElementById('teaPriceTableSearch');
+  if (searchInput) searchInput.value = '';
+  isFilterOnlySpecialTea = false;
+  const filterBtn = document.getElementById('btnFilterOnlySpecialTea');
+  if (filterBtn) filterBtn.className = 'btn btn-outline';
+  renderCustomTeaPriceList();
+}
+
+function closeCustomTeaPriceModal() {
+  document.getElementById('customTeaPriceModal').classList.remove('active');
+}
+
+function toggleFilterOnlySpecialTea() {
+  isFilterOnlySpecialTea = !isFilterOnlySpecialTea;
+  const filterBtn = document.getElementById('btnFilterOnlySpecialTea');
+  if (filterBtn) {
+    filterBtn.className = isFilterOnlySpecialTea ? 'btn btn-primary' : 'btn btn-outline';
+  }
+  renderCustomTeaPriceList();
+}
+
+function toggleAllTableCheckboxes(check) {
+  const checkboxes = document.querySelectorAll('.table-tea-checkbox');
+  checkboxes.forEach(cb => cb.checked = check);
+}
+
+function renderCustomTeaPriceList() {
+  const container = document.getElementById('customTeaPriceTablesList');
+  if (!container) return;
+
+  const searchQuery = (document.getElementById('teaPriceTableSearch').value || '').trim().toLowerCase();
+  
+  let list = allTables;
+  if (searchQuery) {
+    list = list.filter(t => t.name.toLowerCase().includes(searchQuery) || (t.section && t.section.toLowerCase().includes(searchQuery)));
+  }
+  if (isFilterOnlySpecialTea) {
+    list = list.filter(t => t.custom_tea_price != null && t.custom_tea_price > 0);
+  }
+
+  const specialCount = allTables.filter(t => t.custom_tea_price != null && t.custom_tea_price > 0).length;
+  const statsLabel = document.getElementById('customTeaStatsLabel');
+  if (statsLabel) {
+    statsLabel.textContent = `Özel Fiyatlı Masa: ${specialCount} / ${allTables.length}`;
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 30px;">Eşleşen masa bulunamadı.</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(t => {
+    const hasSpecial = t.custom_tea_price != null && t.custom_tea_price > 0;
+    return `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid ${hasSpecial ? 'rgba(16,185,129,0.4)' : 'var(--border-color)'}; border-radius: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="checkbox" class="table-tea-checkbox" value="${t.id}" style="width: 18px; height: 18px; cursor: pointer; accent-color: #10b981;">
+          <div>
+            <div style="font-weight: 700; color: #fff; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+              ${escapeHtml(t.name)}
+              <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal;">(${escapeHtml(t.section || 'Salon')})</span>
+            </div>
+            <div style="font-size: 0.8rem; margin-top: 2px;">
+              ${hasSpecial 
+                ? `<span style="color: #34d399; font-weight: 700;">☕ Özel Fiyat: ${t.custom_tea_price.toFixed(2)} ₺</span>` 
+                : `<span style="color: var(--text-secondary);">Standart Menü Fiyatı</span>`}
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          ${hasSpecial ? `
+            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; color: #f87171; border-color: rgba(248,113,113,0.4);" onclick="setSingleTableTeaPrice(${t.id}, null)">
+              ✕ Standart Yap
+            </button>
+          ` : `
+            <button class="btn btn-success" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700;" onclick="setSingleTableTeaPrice(${t.id}, 10)">
+              ☕ 10 ₺ Yap
+            </button>
+          `}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function setSingleTableTeaPrice(tableId, price) {
+  const table = allTables.find(t => t.id === tableId);
+  if (!table) return;
+
+  try {
+    const res = await fetch(`/api/tables/${tableId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: table.name,
+        section: table.section,
+        custom_tea_price: price
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`${table.name} çay fiyatı ${price ? price + ' ₺' : 'standart'} yapıldı!`, 'success');
+      await loadTables();
+      renderCustomTeaPriceList();
+    } else {
+      showToast('Güncellenemedi: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası', 'danger');
+  }
+}
+
+async function applyBulkTeaPriceToSelected() {
+  const targetPriceInput = document.getElementById('bulkTeaPriceTarget');
+  const targetPrice = targetPriceInput ? parseFloat(targetPriceInput.value) : 10;
+  if (isNaN(targetPrice) || targetPrice < 0) {
+    showToast('Lütfen geçerli bir fiyat girin!', 'warning');
+    return;
+  }
+
+  const checkedBoxes = Array.from(document.querySelectorAll('.table-tea-checkbox:checked'));
+  if (checkedBoxes.length === 0) {
+    showToast('Lütfen en az bir masa seçin!', 'warning');
+    return;
+  }
+
+  const tableIds = checkedBoxes.map(cb => parseInt(cb.value));
+
+  try {
+    const res = await fetch('/api/tables/bulk-tea-price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table_ids: tableIds, tea_price: targetPrice })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✓ ${tableIds.length} masaya ${targetPrice} ₺ çay fiyatı uygulandı!`, 'success');
+      await loadTables();
+      renderCustomTeaPriceList();
+    } else {
+      showToast('İşlem başarısız: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası', 'danger');
+  }
+}
+
+async function applyBulkTeaPriceToAll() {
+  const targetPriceInput = document.getElementById('bulkTeaPriceTarget');
+  const targetPrice = targetPriceInput ? parseFloat(targetPriceInput.value) : 10;
+
+  if (!confirm(`Tüm masalara (${allTables.length} masa) çay fiyatı ${targetPrice} ₺ olarak uygulansın mı?`)) return;
+
+  const tableIds = allTables.map(t => t.id);
+
+  try {
+    const res = await fetch('/api/tables/bulk-tea-price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table_ids: tableIds, tea_price: targetPrice })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`★ Tüm masalara (${tableIds.length} masa) ${targetPrice} ₺ uygulandı!`, 'success');
+      await loadTables();
+      renderCustomTeaPriceList();
+    } else {
+      showToast('İşlem başarısız: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası', 'danger');
+  }
+}
+
+async function resetSelectedTeaPrices() {
+  const checkedBoxes = Array.from(document.querySelectorAll('.table-tea-checkbox:checked'));
+  if (checkedBoxes.length === 0) {
+    showToast('Lütfen sıfırlanacak masaları işaretleyin!', 'warning');
+    return;
+  }
+
+  const tableIds = checkedBoxes.map(cb => parseInt(cb.value));
+
+  try {
+    const res = await fetch('/api/tables/bulk-tea-price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table_ids: tableIds, tea_price: null })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✓ ${tableIds.length} masanın çay fiyatı standart menü fiyatına döndürüldü.`, 'info');
+      await loadTables();
+      renderCustomTeaPriceList();
+    } else {
+      showToast('İşlem başarısız: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası', 'danger');
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {

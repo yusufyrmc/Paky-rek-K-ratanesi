@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Kasa & Yönetim Paneli - Pakyürek Kıraathanesi</title>
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" href="css/kasa.css">
@@ -11,17 +11,20 @@
 
   <!-- Kasa Üst Bar -->
   <header class="kasa-header">
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <a href="ocak.html" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; padding: 8px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" title="Ocak Ekranına Git">
+    <div class="kasa-header-brand">
+      <a href="ocak.html" class="btn btn-primary" title="Ocak Ekranına Git">
         🫖 Ocak Ekranı
       </a>
-      <h2 style="color: var(--primary); font-size: 1.4rem; margin: 0;">💼 PAKYÜREK KASA & YÖNETİM</h2>
+      <h2 class="kasa-title">💼 PAKYÜREK KASA & YÖNETİM</h2>
       <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981;">Online</span>
     </div>
 
-    <div style="display: flex; gap: 10px; align-items: center;">
+    <div class="kasa-header-actions">
       <button class="btn btn-outline" id="btnHeaderPrivacy" onclick="toggleRevenuePrivacy()" title="Ciro Rakamlarını Gizle / Göster">
         <span id="headerPrivacyIcon">👁️</span> <span id="headerPrivacyText">Ciroyu Gizle</span>
+      </button>
+      <button class="btn btn-outline" style="color: #10b981; border-color: #10b981; font-weight: 700;" onclick="openCustomTeaPriceModal()" title="Masalara Özel Çay Fiyatı (10 TL) Belirle">
+        ☕ Masalara 10 ₺ Çay Ayarla
       </button>
       <button class="btn btn-outline" onclick="openMenuManageModal()">
         ☕ Menü & Fiyatları Düzenle
@@ -70,13 +73,13 @@
 
       <!-- SEÇİLİ MASA ADİSYON KUTUSU -->
       <div class="receipt-box" id="selectedTableBox">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="receipt-head">
           <div>
             <h3 id="receiptTableName" style="font-size: 1.4rem; color: #fff;">Masa Seçiniz</h3>
             <span style="font-size: 0.85rem; color: var(--text-secondary);" id="receiptTableStatus">Detayları görmek için masaya tıklayın</span>
           </div>
 
-          <div style="display: flex; gap: 8px;">
+          <div class="receipt-head-actions">
             <button class="btn btn-outline" id="btnRenameTable" style="padding: 6px 12px; font-size: 0.85rem; display: none;" onclick="openRenameModal()">
               ✏️ İsim/No Değiştir
             </button>
@@ -93,12 +96,12 @@
         </div>
 
         <div id="receiptActions" style="display: none; flex-direction: column; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="stack-row">
             <span style="font-size: 1.15rem; font-weight: 600;">Hesap Toplamı:</span>
             <span style="font-size: 1.8rem; font-weight: 800; color: #ef4444;" id="receiptTotalAmount">0.00 ₺</span>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div class="pay-actions-grid">
             <button class="btn btn-success" style="padding: 14px 10px;" onclick="closeTableAccount('nakit')">
               💵 NAKİT AL
             </button>
@@ -119,7 +122,7 @@
     <div style="display: flex; flex-direction: column; gap: 20px;">
       
       <!-- Ciro Özeti Kartları Başlık ve Gizlilik Butonu -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+      <div class="stack-row" style="margin-bottom: 2px;">
         <span style="font-weight: 700; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
           📊 Günlük Kasa Raporu
         </span>
@@ -189,7 +192,7 @@
       <!-- Yeni Ürün Ekleme Formu -->
       <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; margin-bottom: 20px;">
         <h4 style="color: #fff; margin-bottom: 10px; font-size: 0.95rem;">➕ Yeni Ürün Ekle</h4>
-        <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr auto; gap: 8px;">
+        <div class="product-add-grid">
           <input type="text" id="newProdName" placeholder="Ürün Adı (Örn: Ayran)" style="padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 4px; color: #fff;">
           <input type="number" id="newProdPrice" placeholder="Fiyat ₺" style="padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 4px; color: #fff;">
           <select id="newProdCat" style="padding: 8px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 4px; color: #fff;">
@@ -270,17 +273,39 @@
     </div>
   </div>
 
-  <!-- Masa İsim / Numara Değiştir Modalı -->
+  <!-- Masa İsim / Numara / Özel Çay Fiyatı Düzenle Modalı -->
   <div class="modal-overlay" id="renameModal">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="color: var(--primary);">✏️ Masa İsim / Numarasını Düzenle</h3>
+        <h3 style="color: var(--primary);">✏️ Masa Ayarlarını Düzenle</h3>
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeRenameModal()">✕</button>
       </div>
       <div style="display: flex; flex-direction: column; gap: 12px;">
-        <label>Masa Adı veya Numarası (Örn: 5, Masa 5, Kral Masası, Köşe):</label>
-        <input type="text" id="renameTableInput" placeholder="Masa Adı / Numarası..." style="padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1.1rem; font-weight: 700;">
-        <button class="btn btn-success" style="margin-top: 10px; padding: 12px;" onclick="saveRenameTable()">İsmi / Numarayı Kaydet</button>
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 6px;">Masa Adı veya Numarası (Örn: 5, Masa 5, Kral Masası, Köşe):</label>
+          <input type="text" id="renameTableInput" placeholder="Masa Adı / Numarası..." style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1.1rem; font-weight: 700;">
+        </div>
+
+        <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); padding: 12px; border-radius: 8px;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #34d399; margin-bottom: 6px;">
+            ☕ Bu Masaya Özel Çay Fiyatı (₺):
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" id="renameTableTeaPriceInput" placeholder="Boş bırakılırsa standart menü fiyatı" step="0.5" min="0"
+              style="flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1rem; font-weight: 700;">
+            <button type="button" class="btn btn-outline" style="padding: 10px 14px; color: #10b981; border-color: #10b981; font-weight: 700; white-space: nowrap;" onclick="document.getElementById('renameTableTeaPriceInput').value = '10'">
+              ☕ 10 ₺ Yap
+            </button>
+            <button type="button" class="btn btn-outline" style="padding: 10px 12px; color: var(--text-secondary); font-size: 0.85rem; white-space: nowrap;" onclick="document.getElementById('renameTableTeaPriceInput').value = ''" title="Standart Menü Fiyatına Döndür">
+              Standart
+            </button>
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px;">
+            * 10 ₺ yazarsanız garson bu masaya çay girdiğinde otomatik 10 ₺'den hesaplanır. Boş bırakırsanız genel menü fiyatı geçerli olur.
+          </div>
+        </div>
+
+        <button class="btn btn-success" style="margin-top: 6px; padding: 12px; font-weight: 700;" onclick="saveRenameTable()">Ayarları Kaydet</button>
       </div>
     </div>
   </div>
@@ -293,14 +318,25 @@
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeAddTableModal()">✕</button>
       </div>
       <div style="display: flex; flex-direction: column; gap: 12px;">
-        <label>Masa Adı veya Numarası (Örn: 16, Masa 16, Bahçe 11, Loca):</label>
-        <input type="text" id="newTableName" placeholder="Masa Adı / Numarası..." style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
-        <label>Bölüm:</label>
-        <select id="newTableSection" style="padding: 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
-          <option value="İçerisi">🏠 İçerisi</option>
-          <option value="Bahçe">🌿 Bahçe</option>
-          <option value="Dışarısı">☀️ Dışarısı</option>
-        </select>
+        <div>
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 4px;">Masa Adı veya Numarası (Örn: 16, Masa 16, Bahçe 11, Loca):</label>
+          <input type="text" id="newTableName" placeholder="Masa Adı / Numarası..." style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 4px;">Bölüm:</label>
+          <select id="newTableSection" style="width: 100%; padding: 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+            <option value="İçerisi">🏠 İçerisi</option>
+            <option value="Bahçe">🌿 Bahçe</option>
+            <option value="Dışarısı">☀️ Dışarısı</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">☕ Özel Çay Fiyatı (İsteğe bağlı):</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" id="newTableTeaPrice" placeholder="Örn: 10 (Boşsa standart)" step="0.5" min="0" style="flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+            <button type="button" class="btn btn-outline" style="padding: 10px 14px; color: #10b981; border-color: #10b981; font-weight: 700;" onclick="document.getElementById('newTableTeaPrice').value = '10'">10 ₺</button>
+          </div>
+        </div>
         <button class="btn btn-primary" style="margin-top: 10px;" onclick="addNewTable()">Masayı Kaydet</button>
       </div>
     </div>
@@ -340,7 +376,7 @@
         <h4 style="color: #fff; margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
           <span>➕</span> Yeni Esnaf Ekle
         </h4>
-        <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div class="form-grid-3" style="margin-bottom: 10px;">
           <div>
             <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Esnaf Adı / Dükkan İsmi *</label>
             <input type="text" id="kasaNewMerchantName" placeholder="Örn: Berber Mehmet" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
@@ -367,7 +403,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: flex-end;">
+        <div class="form-grid-phone">
           <div>
             <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Telefon (İsteğe bağlı)</label>
             <input type="text" id="kasaNewMerchantPhone" placeholder="05xx xxx xx xx" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
@@ -432,6 +468,66 @@
       </div>
 
       <button class="btn btn-outline" style="width: 100%; padding: 10px;" onclick="closeManageWaitersModal()">Kapat</button>
+    </div>
+  </div>
+
+  <!-- Masalara Özel Çay Fiyatı (10 TL) Ayarlama Modalı -->
+  <div class="modal-overlay" id="customTeaPriceModal">
+    <div class="modal-content" style="max-width: 720px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <div>
+          <h3 style="color: #10b981; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.3rem;">
+            <span>☕</span> Masalara Özel Çay Fiyatı Belirle
+          </h3>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+            Belirlediğiniz masalarda garson sipariş girdiğinde çay otomatik olarak belirlediğiniz fiyattan (örn: 10 ₺) yazılır.
+          </div>
+        </div>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeCustomTeaPriceModal()">✕</button>
+      </div>
+
+      <!-- Bilgi ve Hızlı Toplu Ayar Kutusu -->
+      <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center;">
+            <span style="font-size: 0.85rem; color: #fff; font-weight: 600;">Uygulanacak Fiyat:</span>
+            <input type="number" id="bulkTeaPriceTarget" value="10" step="0.5" min="0" style="width: 70px; padding: 5px 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 4px; color: #10b981; font-weight: 800; font-size: 1rem; text-align: center; margin-left: 8px;">
+            <span style="font-weight: 700; color: #10b981; margin-left: 4px;">₺</span>
+          </div>
+
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="btn btn-success" style="padding: 6px 12px; font-size: 0.85rem; font-weight: 700;" onclick="applyBulkTeaPriceToSelected()" title="İşaretli Masalara Belirlenen Fiyatı Uygula">
+              ✓ Seçilenleri 10 ₺ Yap
+            </button>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="applyBulkTeaPriceToAll()" title="Tüm Masaları Bu Fiyata Ayarla">
+              ★ Tüm Masaları 10 ₺ Yap
+            </button>
+            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem; color: #f87171; border-color: rgba(248,113,113,0.4);" onclick="resetSelectedTeaPrices()" title="Seçilenleri Standart Menü Fiyatına Döndür">
+              ✕ Sıfırla (Standart)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Masa Arama & Hızlı Seçim Filtresi -->
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="toggleAllTableCheckboxes(true)">Tümünü Seç</button>
+          <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="toggleAllTableCheckboxes(false)">Seçimi Kaldır</button>
+          <button class="btn btn-outline" id="btnFilterOnlySpecialTea" style="padding: 4px 10px; font-size: 0.8rem; color: #10b981; border-color: #10b981;" onclick="toggleFilterOnlySpecialTea()">Sadece 10 ₺ Olanlar</button>
+        </div>
+        <input type="text" id="teaPriceTableSearch" placeholder="Masa ara..." oninput="renderCustomTeaPriceList()" style="padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.85rem; width: 160px;">
+      </div>
+
+      <!-- Masalar Listesi -->
+      <div style="flex: 1; overflow-y: auto; max-height: 380px; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;" id="customTeaPriceTablesList">
+        <!-- Dinamik Masa Satırları -->
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.85rem; color: var(--text-secondary);" id="customTeaStatsLabel">Özel Fiyatlı Masa: 0 / 0</span>
+        <button class="btn btn-outline" onclick="closeCustomTeaPriceModal()">Kapat</button>
+      </div>
     </div>
   </div>
 

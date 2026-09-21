@@ -39,6 +39,10 @@
   --shadow-glow: 0 0 25px rgba(245, 158, 11, 0.2);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -53,6 +57,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   background-image: 
     radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 40%);
@@ -256,4 +262,69 @@ h1, h2, h3, h4, h5, h6 {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
+}
+
+.stack-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 10px;
+}
+
+.form-grid-phone {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.product-add-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr auto;
+  gap: 8px;
+}
+
+.pay-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .toast {
+    width: 100%;
+  }
+
+  .modal-content {
+    padding: 16px;
+    max-height: min(90vh, calc(100dvh - 24px));
+  }
+
+  .form-grid-3,
+  .form-grid-phone,
+  .product-add-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pay-actions-grid {
+    grid-template-columns: 1fr;
+  }
 }

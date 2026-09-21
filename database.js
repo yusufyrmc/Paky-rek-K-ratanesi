@@ -55,8 +55,16 @@ async function initDatabase() {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     section TEXT DEFAULT 'Salon',
-    status TEXT DEFAULT 'empty'
+    status TEXT DEFAULT 'empty',
+    custom_tea_price REAL DEFAULT NULL
   )`);
+
+  // Masalara özel çay fiyatı sütununu ekle (mevcut veritabanları için)
+  try {
+    await run("ALTER TABLE tables ADD COLUMN custom_tea_price REAL DEFAULT NULL");
+  } catch (e) {
+    // Sütun zaten eklenmişse hata yoksayılır
+  }
 
   await run(`CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

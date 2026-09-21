@@ -17,12 +17,16 @@
   top: 0;
   z-index: 100;
   backdrop-filter: blur(12px);
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .esnaf-brand {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .esnaf-title {
@@ -35,10 +39,19 @@
   margin: 0;
 }
 
-/* İstatistik Kartları */
+.esnaf-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.esnaf-header-actions .btn {
+  text-decoration: none;
+}
 .esnaf-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -136,7 +149,7 @@
 /* Esnaf Kartları Izgarası */
 .merchants-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 20px;
 }
 
@@ -339,12 +352,32 @@
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
+    padding: 12px 14px;
+  }
+  .esnaf-title {
+    font-size: 1.1rem;
   }
   .esnaf-search-bar {
     flex-direction: column;
     align-items: stretch;
   }
+  .search-input-wrap {
+    min-width: 0;
+    width: 100%;
+  }
   .merchants-grid {
+    grid-template-columns: 1fr;
+  }
+  .esnaf-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .esnaf-container {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .esnaf-stats-grid {
     grid-template-columns: 1fr;
   }
 }

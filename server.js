@@ -138,9 +138,12 @@ app.get('/api/tables', async (req, res) => {
 // Yeni Masa Ekle
 app.post('/api/tables', async (req, res) => {
   try {
-    const { name, section } = req.body;
+    const { name, section, custom_tea_price } = req.body;
     if (!name) return res.status(400).json({ success: false, error: 'Masa adı zorunlu' });
-    const result = await run('INSERT INTO tables (name, section) VALUES (?, ?)', [name, section || 'Salon']);
+    const teaPrice = (custom_tea_price !== undefined && custom_tea_price !== '' && custom_tea_price !== null)
+      ? parseFloat(custom_tea_price)
+      : null;
+    const result = await run('INSERT INTO tables (name, section, custom_tea_price) VALUES (?, ?, ?)', [name, section || 'Salon', teaPrice]);
     io.emit('tables_changed');
     res.json({ success: true, id: result.lastID });
   } catch (error) {
@@ -148,19 +151,44 @@ app.post('/api/tables', async (req, res) => {
   }
 });
 
-// Masa Adı / Numarası Güncelle
+// Masa Adı / Numarası / Özel Çay Fiyatı Güncelle
 app.put('/api/tables/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, section } = req.body;
+    const { name, section, custom_tea_price } = req.body;
     if (!name) return res.status(400).json({ success: false, error: 'Masa adı veya numarası zorunludur' });
 
-    await run('UPDATE tables SET name = ?, section = COALESCE(?, section) WHERE id = ?', [name, section || null, id]);
+    let teaPrice = null;
+    if (custom_tea_price !== undefined && custom_tea_price !== '' && custom_tea_price !== null) {
+      teaPrice = parseFloat(custom_tea_price);
+    }
+
+    await run('UPDATE tables SET name = ?, section = COALESCE(?, section), custom_tea_price = ? WHERE id = ?', [name, section || null, teaPrice, id]);
     // Açık siparişlerdeki masa adını da güncelle
     await run("UPDATE orders SET table_name = ? WHERE table_id = ? AND status != 'completed' AND status != 'cancelled'", [name, id]);
 
     io.emit('tables_changed');
-    res.json({ success: true, message: 'Masa adı güncellendi' });
+    res.json({ success: true, message: 'Masa bilgileri güncellendi' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Çoklu Masaya Özel Çay Fiyatı Ayarla / Kaldır
+app.post('/api/tables/bulk-tea-price', async (req, res) => {
+  try {
+    const { table_ids, tea_price } = req.body;
+    const price = (tea_price !== undefined && tea_price !== '' && tea_price !== null)
+      ? parseFloat(tea_price)
+      : null;
+
+    if (Array.isArray(table_ids) && table_ids.length > 0) {
+      const placeholders = table_ids.map(() => '?').join(',');
+      await run(`UPDATE tables SET custom_tea_price = ? WHERE id IN (${placeholders})`, [price, ...table_ids]);
+    }
+
+    io.emit('tables_changed');
+    res.json({ success: true, message: 'Masaların çay fiyatları güncellendi' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

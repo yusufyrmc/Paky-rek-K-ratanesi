@@ -14,7 +14,7 @@ html, body {
 }
 
 body {
-  padding-bottom: 100px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
   background-color: #0b0f19;
   font-family: var(--font-body);
   margin: 0;
@@ -181,6 +181,26 @@ button, input, select, .product-card, .category-chip, .table-btn, .note-chip {
   }
 }
 
+@media (min-width: 900px) {
+  .menu-grid {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cart-bar-inner {
+    max-width: 1100px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .menu-grid {
+    grid-template-columns: repeat(5, 1fr);
+    max-width: 1280px;
+  }
+}
+
 .product-card {
   background: #161f33;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -290,7 +310,7 @@ button, input, select, .product-card, .category-chip, .table-btn, .note-chip {
   width: 100%;
   background: #0f172a;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 14px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
   z-index: 90;
   box-sizing: border-box;
 }
@@ -353,6 +373,18 @@ button, input, select, .product-card, .category-chip, .table-btn, .note-chip {
   margin-top: 12px;
   width: 100%;
   box-sizing: border-box;
+}
+
+@media (min-width: 700px) {
+  .tables-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1000px) {
+  .tables-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .table-btn {

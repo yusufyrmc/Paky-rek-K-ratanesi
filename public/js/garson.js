@@ -13,6 +13,22 @@ let cart = [];
 let selectedProduct = null;
 let modalQuantity = 1;
 let selectedNotes = new Set();
+let modalUnitPrice = 0;
+
+// Çay Ürününü ve Fiyatını Tespit Eden Yardımcılar
+function isTeaProduct(prod) {
+  if (!prod || !prod.name) return false;
+  const n = prod.name.trim().toLowerCase();
+  return n === 'çay' || n === 'cay' || n.startsWith('çay ') || n.startsWith('cay ');
+}
+
+function getProductEffectivePrice(prod) {
+  if (!prod) return 0;
+  if (isTeaProduct(prod) && selectedTable && selectedTable.custom_tea_price != null && selectedTable.custom_tea_price > 0) {
+    return selectedTable.custom_tea_price;
+  }
+  return prod.price;
+}
 
 // Garson Adı & Garson Yönetimi
 let allWaiters = [];
@@ -243,13 +259,19 @@ function renderProducts() {
       .filter(item => item.product_id === prod.id)
       .reduce((sum, item) => sum + item.quantity, 0);
 
+    const effPrice = getProductEffectivePrice(prod);
+    const hasCustomTea = isTeaProduct(prod) && selectedTable && selectedTable.custom_tea_price != null && selectedTable.custom_tea_price > 0;
+
     return `
       <div class="product-card" id="prod-card-${prod.id}">
         ${inCartQty > 0 ? `<div class="product-cart-badge">${inCartQty}</div>` : ''}
         
         <div class="product-card-top" onclick="quickDirectAdd(${prod.id})">
           <div class="product-title">${escapeHtml(prod.name)}</div>
-          <div class="product-price">${prod.price.toFixed(2)} ₺</div>
+          <div class="product-price" style="${hasCustomTea ? 'color: #10b981; font-weight: 800;' : ''}">
+            ${effPrice.toFixed(2)} ₺
+            ${hasCustomTea ? `<span style="font-size: 0.65rem; background: rgba(16,185,129,0.2); color: #34d399; padding: 1px 5px; border-radius: 4px; display: inline-block; margin-left: 3px; border: 1px solid rgba(16,185,129,0.4);">☕ Masa 10 ₺</span>` : ''}
+          </div>
         </div>
 
         <div class="card-quick-actions">
@@ -274,14 +296,15 @@ function quickDirectAdd(prodId) {
   }
   if (!prod) return;
 
-  const existingIndex = cart.findIndex(item => item.product_id === prod.id && (!item.note || item.note === ''));
+  const unitPrice = getProductEffectivePrice(prod);
+  const existingIndex = cart.findIndex(item => item.product_id === prod.id && item.unit_price === unitPrice && (!item.note || item.note === ''));
   if (existingIndex !== -1) {
     cart[existingIndex].quantity += 1;
   } else {
     cart.push({
       product_id: prod.id,
       product_name: prod.name,
-      unit_price: prod.price,
+      unit_price: unitPrice,
       quantity: 1,
       note: ''
     });
@@ -290,7 +313,7 @@ function quickDirectAdd(prodId) {
   if (navigator.vibrate) navigator.vibrate(30);
   updateCartUI();
   renderProducts();
-  showToast(`+1 ${prod.name} eklendi`, 'info');
+  showToast(`+1 ${prod.name} (${unitPrice.toFixed(2)} ₺) eklendi`, 'info');
 }
 
 // Ürün Hızlı Not & Adet Modalı
@@ -306,11 +329,25 @@ function openProductOptions(prodId) {
   selectedProduct = prod;
   modalQuantity = 1;
   selectedNotes.clear();
+  modalUnitPrice = getProductEffectivePrice(prod);
 
   document.getElementById('modalProdName').textContent = prod.name;
-  document.getElementById('modalProdPrice').textContent = `${prod.price.toFixed(2)} ₺`;
+  document.getElementById('modalProdPrice').textContent = `${modalUnitPrice.toFixed(2)} ₺`;
   document.getElementById('modalQtyDisplay').textContent = '1';
   document.getElementById('modalCustomNote').value = '';
+
+  // Çay Fiyatı Seçici Satırı
+  const teaRow = document.getElementById('modalTeaPriceRow');
+  if (teaRow) {
+    if (isTeaProduct(prod)) {
+      teaRow.style.display = 'block';
+      const stdPriceLabel = document.getElementById('modalTeaStdPriceLabel');
+      if (stdPriceLabel) stdPriceLabel.textContent = prod.price.toFixed(2);
+      updateModalTeaPriceButtons();
+    } else {
+      teaRow.style.display = 'none';
+    }
+  }
 
   const chipsContainer = document.getElementById('modalNotesChips');
   const quickNotes = prod.quick_notes || [];
@@ -326,6 +363,27 @@ function openProductOptions(prodId) {
 
   updateModalTotalPrice();
   document.getElementById('productOptionsModal').classList.add('active');
+}
+
+function selectModalTeaPrice(price) {
+  modalUnitPrice = parseFloat(price);
+  updateModalTeaPriceButtons();
+  updateModalTotalPrice();
+  document.getElementById('modalProdPrice').textContent = `${modalUnitPrice.toFixed(2)} ₺`;
+}
+
+function updateModalTeaPriceButtons() {
+  const btn10 = document.getElementById('modalBtnTea10');
+  const btnStd = document.getElementById('modalBtnTeaStd');
+  if (!btn10 || !btnStd || !selectedProduct) return;
+
+  if (modalUnitPrice === 10) {
+    btn10.className = 'btn btn-primary';
+    btnStd.className = 'btn btn-outline';
+  } else {
+    btn10.className = 'btn btn-outline';
+    btnStd.className = 'btn btn-primary';
+  }
 }
 
 function toggleNoteChip(note) {
@@ -346,7 +404,7 @@ function changeModalQty(delta) {
 
 function updateModalTotalPrice() {
   if (!selectedProduct) return;
-  const total = selectedProduct.price * modalQuantity;
+  const total = modalUnitPrice * modalQuantity;
   document.getElementById('modalItemTotalPrice').textContent = `${total.toFixed(2)} ₺`;
 }
 
@@ -365,15 +423,15 @@ function confirmAddToCart() {
   if (customNote) notesArr.push(customNote);
   const finalNote = notesArr.join(', ');
 
-  // Sepette aynı ürün ve aynı not var mı kontrol et
-  const existingIndex = cart.findIndex(item => item.product_id === selectedProduct.id && item.note === finalNote);
+  // Sepette aynı ürün, aynı birim fiyat ve aynı not var mı kontrol et
+  const existingIndex = cart.findIndex(item => item.product_id === selectedProduct.id && item.unit_price === modalUnitPrice && item.note === finalNote);
   if (existingIndex !== -1) {
     cart[existingIndex].quantity += modalQuantity;
   } else {
     cart.push({
       product_id: selectedProduct.id,
       product_name: selectedProduct.name,
-      unit_price: selectedProduct.price,
+      unit_price: modalUnitPrice,
       quantity: modalQuantity,
       note: finalNote
     });
@@ -385,7 +443,7 @@ function confirmAddToCart() {
   updateCartUI();
   renderProducts();
   closeOptionsModal();
-  showToast(`${modalQuantity}x ${selectedProduct.name} sepete eklendi`, 'success');
+  showToast(`${modalQuantity}x ${selectedProduct.name} (${modalUnitPrice.toFixed(2)} ₺) sepete eklendi`, 'success');
 }
 
 // Sepet UI Güncelle
@@ -585,15 +643,19 @@ function renderTablesModal() {
   container.innerHTML = filtered.map(t => {
     const isSelected = selectedTable && selectedTable.id === t.id;
     const isOccupied = t.status === 'occupied' || t.current_total > 0;
+    const hasSpecialTea = t.custom_tea_price != null && t.custom_tea_price > 0;
 
     return `
       <div class="table-btn ${isOccupied ? 'occupied' : 'empty'} ${isSelected ? 'selected' : ''}" 
            onclick="selectTableById(${t.id})" style="position: relative;">
-        <button type="button" class="btn-table-quick-rename" onclick="event.stopPropagation(); openGarsonRenameModalById(${t.id}, '${escapeHtml(t.name)}')" title="İsim / No Değiştir" style="position: absolute; top: 6px; right: 6px; border: none; background: rgba(0,0,0,0.35); color: #fff; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; line-height: 1;">
+        <button type="button" class="btn-table-quick-rename" onclick="event.stopPropagation(); openGarsonRenameModalById(${t.id}, '${escapeHtml(t.name)}')" title="İsim / No / Çay Fiyatı Değiştir" style="position: absolute; top: 6px; right: 6px; border: none; background: rgba(0,0,0,0.35); color: #fff; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; line-height: 1;">
           ✏️
         </button>
         <div style="width: 8px; height: 8px; border-radius: 50%;" class="status-dot"></div>
-        <div class="table-btn-title">${escapeHtml(t.name)}</div>
+        <div class="table-btn-title" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <span>${escapeHtml(t.name)}</span>
+          ${hasSpecialTea ? `<span style="font-size: 0.68rem; background: rgba(16,185,129,0.3); color: #34d399; padding: 1px 5px; border-radius: 4px; font-weight: 800; border: 1px solid rgba(16,185,129,0.5);">☕ ${t.custom_tea_price.toFixed(0)} ₺</span>` : ''}
+        </div>
         <div class="table-btn-amount">
           ${isOccupied ? `${t.current_total.toFixed(2)} ₺` : 'Boş'}
         </div>
@@ -625,6 +687,12 @@ function openGarsonRenameModalById(id, currentName) {
   tableToRename = tablesData.find(t => t.id === id) || { id, name: currentName };
   const input = document.getElementById('garsonRenameInput');
   input.value = currentName || (tableToRename ? tableToRename.name : '');
+
+  const teaPriceInput = document.getElementById('garsonRenameTeaPriceInput');
+  if (teaPriceInput) {
+    teaPriceInput.value = (tableToRename && tableToRename.custom_tea_price != null) ? tableToRename.custom_tea_price : '';
+  }
+
   document.getElementById('renameModal').classList.add('active');
   setTimeout(() => input.focus(), 120);
 }
@@ -648,15 +716,21 @@ async function saveGarsonRenameTable() {
     return;
   }
 
+  const teaPriceInput = document.getElementById('garsonRenameTeaPriceInput');
+  const customTeaPrice = teaPriceInput ? teaPriceInput.value.trim() : '';
+
   try {
     const res = await fetch(`/api/tables/${tableToRename.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName })
+      body: JSON.stringify({ 
+        name: newName,
+        custom_tea_price: customTeaPrice !== '' ? parseFloat(customTeaPrice) : null
+      })
     });
     const data = await res.json();
     if (data.success) {
-      showToast(`Masa adı "${newName}" olarak güncellendi!`, 'success');
+      showToast(`Masa bilgileri güncellendi!`, 'success');
       closeGarsonRenameModal();
       await loadTables();
     } else {
@@ -670,7 +744,12 @@ async function saveGarsonRenameTable() {
 
 function selectTable(table) {
   selectedTable = table;
-  document.getElementById('currentTableName').textContent = table.name;
+
+  const teaBadgeHtml = (table.custom_tea_price != null && table.custom_tea_price > 0)
+    ? ` <span class="badge-tea-special" style="font-size: 0.72rem; background: rgba(16,185,129,0.25); color: #34d399; border: 1px solid rgba(16,185,129,0.5); padding: 1px 6px; border-radius: 4px; font-weight: 800; vertical-align: middle; margin-left: 4px;">☕ ${table.custom_tea_price.toFixed(0)} ₺</span>`
+    : '';
+
+  document.getElementById('currentTableName').innerHTML = escapeHtml(table.name) + teaBadgeHtml;
   document.getElementById('headerTableIcon').textContent = table.name.replace(/\D/g, '') || 'M';
 
   const isOccupied = table.status === 'occupied' || table.current_total > 0;
@@ -690,6 +769,9 @@ function selectTable(table) {
       adisyonBtn.classList.add('btn-outline');
     }
   }
+
+  // Masaya özel çay fiyatı değişmiş olabileceğinden menü fiyatlarını anında tazele!
+  renderProducts();
 }
 
 // Masa Adisyonunu Görüntüleme
