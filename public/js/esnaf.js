@@ -157,8 +157,8 @@ function renderMerchants() {
             <button class="btn-cetele" onclick="quickAddCetele(${m.id}, 'Türk Kahvesi', 30, 1)" title="1 Kahve Yaz">
               +1 🫖 Kahve <small style="opacity:0.7;">(30₺)</small>
             </button>
-            <button class="btn-cetele" onclick="quickAddCetele(${m.id}, 'Kaşarlı Tost', 50, 1)" title="1 Tost Yaz">
-              +1 🥪 Tost <small style="opacity:0.7;">(50₺)</small>
+            <button class="btn-cetele" onclick="quickAddCetele(${m.id}, 'Maden Suyu (Sade)', 15, 1)" title="1 Soda Yaz">
+              +1 🥤 Soda <small style="opacity:0.7;">(15₺)</small>
             </button>
           </div>
         </div>

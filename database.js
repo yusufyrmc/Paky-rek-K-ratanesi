@@ -174,19 +174,16 @@ async function initDatabase() {
     await run(`INSERT INTO categories (name, icon, sort_order) VALUES 
       ('Çay & Sıcaklar', '☕', 1),
       ('Kahveler', '🫖', 2),
-      ('Soğuk Meşrubatlar', '🥤', 3),
-      ('Tost & Atıştırmalık', '🥪', 4)
+      ('Soğuk Meşrubatlar', '🥤', 3)
     `);
 
     // Çay ve Sıcaklar
     const sicaklar = await get("SELECT id FROM categories WHERE name = 'Çay & Sıcaklar'");
     const kahveler = await get("SELECT id FROM categories WHERE name = 'Kahveler'");
     const soguklar = await get("SELECT id FROM categories WHERE name = 'Soğuk Meşrubatlar'");
-    const yiyecek = await get("SELECT id FROM categories WHERE name = 'Tost & Atıştırmalık'");
 
     const defaultNotesCay = JSON.stringify(["Açık", "Koyu", "Duble", "Paşa", "Limonlu", "Fincan"]);
     const defaultNotesKahve = JSON.stringify(["Sade", "Az Şekerli", "Orta", "Şekerli", "Duble"]);
-    const defaultNotesTost = JSON.stringify(["Çift Kaşar", "Acılı", "Ketçap/Mayonez", "İnce"]);
 
     // Ürünler
     const products = [
@@ -211,12 +208,7 @@ async function initDatabase() {
       { cat: soguklar.id, name: 'Fanta', price: 30, notes: JSON.stringify(["Soğuk", "Buzlu"]) },
       { cat: soguklar.id, name: 'Gazoz', price: 25, notes: JSON.stringify(["Soğuk", "Limonlu"]) },
       { cat: soguklar.id, name: 'Ayran', price: 20, notes: JSON.stringify(["Açık", "Kapalı"]) },
-      { cat: soguklar.id, name: 'Su (Küçük)', price: 8, notes: JSON.stringify(["Soğuk", "Oda Sıcaklığı"]) },
-
-      { cat: yiyecek.id, name: 'Kaşarlı Tost', price: 50, notes: defaultNotesTost },
-      { cat: yiyecek.id, name: 'Sucuklu Tost', price: 60, notes: defaultNotesTost },
-      { cat: yiyecek.id, name: 'Karışık Tost', price: 65, notes: defaultNotesTost },
-      { cat: yiyecek.id, name: 'Patates Tava', price: 50, notes: JSON.stringify(["Soslu", "Baharatlı"]) }
+      { cat: soguklar.id, name: 'Su (Küçük)', price: 8, notes: JSON.stringify(["Soğuk", "Oda Sıcaklığı"]) }
     ];
 
     for (const p of products) {
