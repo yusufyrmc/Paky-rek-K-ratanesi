@@ -48,23 +48,42 @@ async function initDatabase() {
     price REAL NOT NULL,
     quick_notes TEXT,
     is_active INTEGER DEFAULT 1,
+    special_price REAL DEFAULT NULL,
     FOREIGN KEY(category_id) REFERENCES categories(id)
   )`);
+
+  // Ürünlere özel fiyat sütununu ekle
+  try {
+    await run("ALTER TABLE products ADD COLUMN special_price REAL DEFAULT NULL");
+  } catch (e) {}
 
   await run(`CREATE TABLE IF NOT EXISTS tables (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     section TEXT DEFAULT 'Salon',
     status TEXT DEFAULT 'empty',
-    custom_tea_price REAL DEFAULT NULL
+    custom_tea_price REAL DEFAULT NULL,
+    is_special INTEGER DEFAULT 0
   )`);
 
-  // Masalara özel çay fiyatı sütununu ekle (mevcut veritabanları için)
+  // Masalara özel fiyat sütunlarını ekle (mevcut veritabanları için)
   try {
     await run("ALTER TABLE tables ADD COLUMN custom_tea_price REAL DEFAULT NULL");
-  } catch (e) {
-    // Sütun zaten eklenmişse hata yoksayılır
-  }
+  } catch (e) {}
+  try {
+    await run("ALTER TABLE tables ADD COLUMN is_special INTEGER DEFAULT 0");
+  } catch (e) {}
+
+  // Mevcut çay/oralet ürünleri için başlangıç özel fiyatını 10 TL olarak ayarla
+  try {
+    await run(`
+      UPDATE products 
+      SET special_price = 10 
+      WHERE special_price IS NULL 
+        AND (id = 1 OR name = 'Çay' OR name LIKE 'Oralet%' OR name IN ('Kuşburnu', 'Adaçayı', 'Ihlamur'))
+    `);
+    await run("UPDATE tables SET is_special = 1 WHERE custom_tea_price > 0");
+  } catch (e) {}
 
   await run(`CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

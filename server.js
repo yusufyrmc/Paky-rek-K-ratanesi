@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -129,7 +130,11 @@ app.get('/api/tables', async (req, res) => {
       FROM tables t
       ORDER BY t.section, t.id
     `);
-    res.json({ success: true, data: tables });
+    const formattedTables = tables.map(t => ({
+      ...t,
+      is_special: (t.is_special === 1 || (t.custom_tea_price != null && t.custom_tea_price > 0)) ? 1 : 0
+    }));
+    res.json({ success: true, data: formattedTables });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -138,12 +143,13 @@ app.get('/api/tables', async (req, res) => {
 // Yeni Masa Ekle
 app.post('/api/tables', async (req, res) => {
   try {
-    const { name, section, custom_tea_price } = req.body;
+    const { name, section, custom_tea_price, is_special } = req.body;
     if (!name) return res.status(400).json({ success: false, error: 'Masa adı zorunlu' });
     const teaPrice = (custom_tea_price !== undefined && custom_tea_price !== '' && custom_tea_price !== null)
       ? parseFloat(custom_tea_price)
       : null;
-    const result = await run('INSERT INTO tables (name, section, custom_tea_price) VALUES (?, ?, ?)', [name, section || 'Salon', teaPrice]);
+    const specialVal = is_special ? 1 : (teaPrice !== null ? 1 : 0);
+    const result = await run('INSERT INTO tables (name, section, custom_tea_price, is_special) VALUES (?, ?, ?, ?)', [name, section || 'Salon', teaPrice, specialVal]);
     io.emit('tables_changed');
     res.json({ success: true, id: result.lastID });
   } catch (error) {
@@ -151,11 +157,11 @@ app.post('/api/tables', async (req, res) => {
   }
 });
 
-// Masa Adı / Numarası / Özel Çay Fiyatı Güncelle
+// Masa Adı / Numarası / Özel Fiyat Durumu Güncelle
 app.put('/api/tables/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, section, custom_tea_price } = req.body;
+    const { name, section, custom_tea_price, is_special } = req.body;
     if (!name) return res.status(400).json({ success: false, error: 'Masa adı veya numarası zorunludur' });
 
     let teaPrice = null;
@@ -163,7 +169,22 @@ app.put('/api/tables/:id', async (req, res) => {
       teaPrice = parseFloat(custom_tea_price);
     }
 
-    await run('UPDATE tables SET name = ?, section = COALESCE(?, section), custom_tea_price = ? WHERE id = ?', [name, section || null, teaPrice, id]);
+    let specialVal = undefined;
+    if (is_special !== undefined && is_special !== null) {
+      specialVal = is_special ? 1 : 0;
+    } else if (teaPrice !== null && teaPrice > 0) {
+      specialVal = 1;
+    }
+
+    await run(`
+      UPDATE tables 
+      SET name = ?, 
+          section = COALESCE(?, section), 
+          custom_tea_price = ?,
+          is_special = COALESCE(?, is_special)
+      WHERE id = ?
+    `, [name, section || null, teaPrice, specialVal, id]);
+
     // Açık siparişlerdeki masa adını da güncelle
     await run("UPDATE orders SET table_name = ? WHERE table_id = ? AND status != 'completed' AND status != 'cancelled'", [name, id]);
 
@@ -174,17 +195,39 @@ app.put('/api/tables/:id', async (req, res) => {
   }
 });
 
-// Çoklu Masaya Özel Çay Fiyatı Ayarla / Kaldır
-app.post('/api/tables/bulk-tea-price', async (req, res) => {
+// Çoklu Masayı Özel Fiyatlı Yap / Standart Yap
+app.post('/api/tables/bulk-special-pricing', async (req, res) => {
   try {
-    const { table_ids, tea_price } = req.body;
+    const { table_ids, is_special, tea_price } = req.body;
+    const specialVal = is_special ? 1 : 0;
     const price = (tea_price !== undefined && tea_price !== '' && tea_price !== null)
       ? parseFloat(tea_price)
       : null;
 
     if (Array.isArray(table_ids) && table_ids.length > 0) {
       const placeholders = table_ids.map(() => '?').join(',');
-      await run(`UPDATE tables SET custom_tea_price = ? WHERE id IN (${placeholders})`, [price, ...table_ids]);
+      await run(`UPDATE tables SET is_special = ?, custom_tea_price = ? WHERE id IN (${placeholders})`, [specialVal, price, ...table_ids]);
+    }
+
+    io.emit('tables_changed');
+    res.json({ success: true, message: 'Masaların özel fiyat durumları güncellendi' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Çoklu Masaya Özel Çay Fiyatı Ayarla / Kaldır (Geriye Dönük Uyumluluk)
+app.post('/api/tables/bulk-tea-price', async (req, res) => {
+  try {
+    const { table_ids, tea_price } = req.body;
+    const price = (tea_price !== undefined && tea_price !== '' && tea_price !== null)
+      ? parseFloat(tea_price)
+      : null;
+    const isSpecial = price !== null ? 1 : 0;
+
+    if (Array.isArray(table_ids) && table_ids.length > 0) {
+      const placeholders = table_ids.map(() => '?').join(',');
+      await run(`UPDATE tables SET custom_tea_price = ?, is_special = ? WHERE id IN (${placeholders})`, [price, isSpecial, ...table_ids]);
     }
 
     io.emit('tables_changed');
@@ -218,6 +261,7 @@ app.get('/api/menu', async (req, res) => {
         .filter(p => p.category_id === cat.id)
         .map(p => ({
           ...p,
+          special_price: p.special_price != null ? p.special_price : null,
           quick_notes: p.quick_notes ? JSON.parse(p.quick_notes) : []
         }))
     }));
@@ -231,12 +275,16 @@ app.get('/api/menu', async (req, res) => {
 // Ürün Ekle
 app.post('/api/products', async (req, res) => {
   try {
-    const { category_id, name, price, quick_notes } = req.body;
+    const { category_id, name, price, quick_notes, special_price } = req.body;
     if (!name || price == null) return res.status(400).json({ success: false, error: 'Ad ve fiyat zorunludur' });
     const notesStr = quick_notes ? JSON.stringify(quick_notes) : '[]';
+    const specPrice = (special_price !== undefined && special_price !== '' && special_price !== null)
+      ? parseFloat(special_price)
+      : null;
+
     const result = await run(
-      'INSERT INTO products (category_id, name, price, quick_notes) VALUES (?, ?, ?, ?)',
-      [category_id, name, parseFloat(price), notesStr]
+      'INSERT INTO products (category_id, name, price, quick_notes, special_price) VALUES (?, ?, ?, ?, ?)',
+      [category_id, name, parseFloat(price), notesStr, specPrice]
     );
     io.emit('menu_changed');
     res.json({ success: true, id: result.lastID });
@@ -249,14 +297,40 @@ app.post('/api/products', async (req, res) => {
 app.put('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { category_id, name, price, quick_notes, is_active } = req.body;
+    const { category_id, name, price, quick_notes, is_active, special_price } = req.body;
     const notesStr = quick_notes ? JSON.stringify(quick_notes) : '[]';
+    const specPrice = (special_price !== undefined && special_price !== '' && special_price !== null)
+      ? parseFloat(special_price)
+      : null;
+
     await run(
-      'UPDATE products SET category_id = ?, name = ?, price = ?, quick_notes = ?, is_active = ? WHERE id = ?',
-      [category_id, name, parseFloat(price), notesStr, is_active ?? 1, id]
+      'UPDATE products SET category_id = ?, name = ?, price = ?, quick_notes = ?, is_active = ?, special_price = ? WHERE id = ?',
+      [category_id, name, parseFloat(price), notesStr, is_active ?? 1, specPrice, id]
     );
     io.emit('menu_changed');
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Çoklu Ürün Özel Fiyatlarını Güncelle (Hangi Ürüne Ne Kadar Özel Fiyat Yazılacak?)
+app.post('/api/products/bulk-special-prices', async (req, res) => {
+  try {
+    const { items } = req.body; // Array of { id, special_price }
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ success: false, error: 'Geçersiz veri formatı' });
+    }
+
+    for (const item of items) {
+      const specPrice = (item.special_price !== undefined && item.special_price !== '' && item.special_price !== null && !isNaN(item.special_price))
+        ? parseFloat(item.special_price)
+        : null;
+      await run('UPDATE products SET special_price = ? WHERE id = ?', [specPrice, item.id]);
+    }
+
+    io.emit('menu_changed');
+    res.json({ success: true, message: 'Ürün özel fiyatları güncellendi' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

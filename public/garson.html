@@ -119,15 +119,15 @@
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeOptionsModal()">✕</button>
       </div>
 
-      <!-- Çay & Çay Ürünleri Özel Fiyat Seçimi -->
-      <div id="modalTeaPriceRow" style="display: none; margin-top: 14px; background: rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">☕ Çay / Çay Ürünleri Birim Fiyatı:</div>
+      <!-- Ürün Özel / Standart Fiyat Seçimi -->
+      <div id="modalSpecialPriceRow" style="display: none; margin-top: 14px; background: rgba(16,185,129,0.08); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3);">
+        <div style="font-size: 0.8rem; color: #34d399; margin-bottom: 6px; font-weight: 700;">⭐ Birim Fiyat Seçimi:</div>
         <div style="display: flex; gap: 8px;">
-          <button type="button" class="btn" id="modalBtnTea10" onclick="selectModalTeaPrice(10)" style="flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;">
-            ☕ 10.00 ₺ (Özel)
+          <button type="button" class="btn" id="modalBtnSpecialPrice" onclick="selectModalSpecialPrice(true)" style="flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;">
+            ⭐ <span id="modalSpecialPriceLabel">10.00</span> ₺ (Özel)
           </button>
-          <button type="button" class="btn" id="modalBtnTeaStd" onclick="selectModalTeaPrice(selectedProduct ? selectedProduct.price : 15)" style="flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;">
-            Standart (<span id="modalTeaStdPriceLabel">15</span> ₺)
+          <button type="button" class="btn" id="modalBtnStdPrice" onclick="selectModalSpecialPrice(false)" style="flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;">
+            Standart (<span id="modalStdPriceLabel">15.00</span> ₺)
           </button>
         </div>
       </div>
@@ -237,23 +237,32 @@
         <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="setGarsonRenameSuggestion('Protokol')">⭐ Protokol</button>
       </div>
 
-      <!-- Masaya Özel Çay Fiyatı -->
-      <div style="margin-bottom: 16px; background: rgba(0,0,0,0.25); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #34d399; margin-bottom: 6px;">
-          ☕ Bu Masaya Özel Çay Fiyatı (₺):
+      <!-- Masaya Özel Fiyat Tarifesi -->
+      <div style="margin-bottom: 16px; background: rgba(16,185,129,0.08); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3);">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+          <input type="checkbox" id="garsonRenameIsSpecial" style="width: 18px; height: 18px; accent-color: #10b981; cursor: pointer;">
+          <div>
+            <div style="font-size: 0.9rem; font-weight: 800; color: #34d399;">⭐ Bu Masaya Özel Fiyat Tarifesi Uygula</div>
+            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">
+              İşaretlendiğinde menüdeki özel fiyatlı ürünler bu masaya indirimli yazılır.
+            </div>
+          </div>
         </label>
-        <div style="display: flex; gap: 8px;">
-          <input type="number" id="garsonRenameTeaPriceInput" placeholder="Standart Menü" step="0.5" min="0"
-            style="flex: 1; padding: 8px 10px; font-size: 0.95rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; outline: none; font-weight: 700;">
-          <button type="button" class="btn btn-outline" style="padding: 8px 12px; color: #10b981; border-color: #10b981; font-weight: 700; font-size: 0.85rem; white-space: nowrap;" onclick="document.getElementById('garsonRenameTeaPriceInput').value = '10'">
-            ☕ 10 ₺ Yap
-          </button>
-          <button type="button" class="btn btn-outline" style="padding: 8px 10px; color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;" onclick="document.getElementById('garsonRenameTeaPriceInput').value = ''">
-            Standart
-          </button>
-        </div>
-        <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px;">
-          10 ₺ kaydedilirse bu masaya çay otomatik 10 ₺'den yazılır.
+        
+        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(16,185,129,0.2);">
+          <label style="display: block; font-size: 0.78rem; color: #cbd5e1; margin-bottom: 4px;">
+            İsteğe Bağlı: Bu Masaya Özel Çay Fiyatı (₺):
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" id="garsonRenameTeaPriceInput" placeholder="Standart Menü" step="0.5" min="0"
+              style="flex: 1; padding: 6px 10px; font-size: 0.9rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; outline: none; font-weight: 700;">
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; color: #10b981; border-color: #10b981; font-weight: 700; font-size: 0.8rem; white-space: nowrap;" onclick="document.getElementById('garsonRenameTeaPriceInput').value = '10'; document.getElementById('garsonRenameIsSpecial').checked = true;">
+              10 ₺
+            </button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 8px; color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;" onclick="document.getElementById('garsonRenameTeaPriceInput').value = ''">
+              Temizle
+            </button>
+          </div>
         </div>
       </div>
 
