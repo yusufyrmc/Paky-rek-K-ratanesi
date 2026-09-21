@@ -1,11 +1,17 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const { supabase } = require('./supabaseClient');
+const { runSupabase, allSupabase, getSupabase, pingSupabase } = require('./supabaseQuery');
 
-const dbPath = path.join(__dirname, 'pakyurek.db');
-const db = new sqlite3.Database(dbPath);
+const useSupabase = !!supabase;
+let db = null;
 
-// Helper for promises
-const run = (sql, params = []) => {
+if (!useSupabase) {
+  const dbPath = path.join(__dirname, 'pakyurek.db');
+  db = new sqlite3.Database(dbPath);
+}
+
+const runSqlite = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
       if (err) reject(err);
@@ -14,7 +20,7 @@ const run = (sql, params = []) => {
   });
 };
 
-const all = (sql, params = []) => {
+const allSqlite = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) reject(err);
@@ -23,7 +29,7 @@ const all = (sql, params = []) => {
   });
 };
 
-const get = (sql, params = []) => {
+const getSqlite = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
       if (err) reject(err);
@@ -32,16 +38,19 @@ const get = (sql, params = []) => {
   });
 };
 
-async function initDatabase() {
-  // Tabloları oluştur
-  await run(`CREATE TABLE IF NOT EXISTS categories (
+const run = (sql, params = []) => useSupabase ? runSupabase(sql, params) : runSqlite(sql, params);
+const all = (sql, params = []) => useSupabase ? allSupabase(sql, params) : allSqlite(sql, params);
+const get = (sql, params = []) => useSupabase ? getSupabase(sql, params) : getSqlite(sql, params);
+
+async function initSqliteSchema() {
+  await runSqlite(`CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     icon TEXT,
     sort_order INTEGER DEFAULT 0
   )`);
 
-  await run(`CREATE TABLE IF NOT EXISTS products (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category_id INTEGER,
     name TEXT NOT NULL,
@@ -52,12 +61,11 @@ async function initDatabase() {
     FOREIGN KEY(category_id) REFERENCES categories(id)
   )`);
 
-  // Ürünlere özel fiyat sütununu ekle
   try {
-    await run("ALTER TABLE products ADD COLUMN special_price REAL DEFAULT NULL");
+    await runSqlite("ALTER TABLE products ADD COLUMN special_price REAL DEFAULT NULL");
   } catch (e) {}
 
-  await run(`CREATE TABLE IF NOT EXISTS tables (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS tables (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     section TEXT DEFAULT 'Salon',
@@ -66,37 +74,35 @@ async function initDatabase() {
     is_special INTEGER DEFAULT 0
   )`);
 
-  // Masalara özel fiyat sütunlarını ekle (mevcut veritabanları için)
   try {
-    await run("ALTER TABLE tables ADD COLUMN custom_tea_price REAL DEFAULT NULL");
+    await runSqlite("ALTER TABLE tables ADD COLUMN custom_tea_price REAL DEFAULT NULL");
   } catch (e) {}
   try {
-    await run("ALTER TABLE tables ADD COLUMN is_special INTEGER DEFAULT 0");
+    await runSqlite("ALTER TABLE tables ADD COLUMN is_special INTEGER DEFAULT 0");
   } catch (e) {}
 
-  // Mevcut çay/oralet ürünleri için başlangıç özel fiyatını 10 TL olarak ayarla
   try {
-    await run(`
+    await runSqlite(`
       UPDATE products 
       SET special_price = 10 
       WHERE special_price IS NULL 
         AND (id = 1 OR name = 'Çay' OR name LIKE 'Oralet%' OR name IN ('Kuşburnu', 'Adaçayı', 'Ihlamur'))
     `);
-    await run("UPDATE tables SET is_special = 1 WHERE custom_tea_price > 0");
+    await runSqlite("UPDATE tables SET is_special = 1 WHERE custom_tea_price > 0");
   } catch (e) {}
 
-  await run(`CREATE TABLE IF NOT EXISTS orders (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     table_id INTEGER NOT NULL,
     table_name TEXT NOT NULL,
     waiter_name TEXT NOT NULL,
-    status TEXT DEFAULT 'pending', -- pending, preparing, ready, completed, cancelled
+    status TEXT DEFAULT 'pending',
     total_amount REAL DEFAULT 0,
     created_at DATETIME DEFAULT (datetime('now', 'localtime')),
     updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
   )`);
 
-  await run(`CREATE TABLE IF NOT EXISTS order_items (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     order_id INTEGER NOT NULL,
     product_id INTEGER,
@@ -108,46 +114,46 @@ async function initDatabase() {
     FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
   )`);
 
-  await run(`CREATE TABLE IF NOT EXISTS payments (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     table_id INTEGER,
     table_name TEXT,
     amount REAL NOT NULL,
-    payment_type TEXT DEFAULT 'nakit', -- nakit, kart, veresiye
+    payment_type TEXT DEFAULT 'nakit',
     waiter_name TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // Esnaf & Veresiye / Çetele Tabloları
-  await run(`CREATE TABLE IF NOT EXISTS merchants (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS merchants (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    shop_type TEXT DEFAULT 'Esnaf', -- Berber, Terzi, Kasap, Eczane, Taksi vb.
+    shop_type TEXT DEFAULT 'Esnaf',
     phone TEXT,
     notes TEXT,
     balance REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  await run(`CREATE TABLE IF NOT EXISTS merchant_transactions (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS merchant_transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     merchant_id INTEGER NOT NULL,
-    type TEXT NOT NULL, -- 'order' (borç ekleme) veya 'payment' (tahsilat alma)
+    type TEXT NOT NULL,
     amount REAL NOT NULL,
     description TEXT,
-    payment_type TEXT DEFAULT 'nakit', -- nakit, kart
+    payment_type TEXT DEFAULT 'nakit',
     waiter_name TEXT DEFAULT 'Kasa',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(merchant_id) REFERENCES merchants(id) ON DELETE CASCADE
   )`);
 
-  // Garsonlar Tablosu
-  await run(`CREATE TABLE IF NOT EXISTS waiters (
+  await runSqlite(`CREATE TABLE IF NOT EXISTS waiters (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     created_at DATETIME DEFAULT (datetime('now', 'localtime'))
   )`);
+}
 
+async function seedDefaultRows() {
   // Başlangıç Garsonları kontrol et
   const waiterCount = await get('SELECT COUNT(*) as count FROM waiters');
   if (waiterCount.count === 0) {
@@ -256,6 +262,21 @@ async function initDatabase() {
     }
   }
 
+  console.log('Varsayılan kayıtlar kontrol edildi.');
+}
+
+async function initDatabase() {
+  if (useSupabase) {
+    console.log('Supabase bulut veritabanına bağlanılıyor...');
+    await pingSupabase();
+    console.log('Supabase bağlantısı başarılı. Menü, sipariş ve kasa kayıtları buluta yazılacak.');
+    await seedDefaultRows();
+    console.log('Veritabanı hazır ve güncel (Supabase).');
+    return;
+  }
+
+  await initSqliteSchema();
+  await seedDefaultRows();
   console.log('Veritabanı hazır ve güncel.');
 }
 

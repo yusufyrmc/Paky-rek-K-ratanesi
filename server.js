@@ -262,7 +262,9 @@ app.get('/api/menu', async (req, res) => {
         .map(p => ({
           ...p,
           special_price: p.special_price != null ? p.special_price : null,
-          quick_notes: p.quick_notes ? JSON.parse(p.quick_notes) : []
+          quick_notes: Array.isArray(p.quick_notes)
+            ? p.quick_notes
+            : (p.quick_notes ? JSON.parse(p.quick_notes) : [])
         }))
     }));
 
