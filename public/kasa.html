@@ -471,26 +471,51 @@
     </div>
   </div>
 
-  <!-- Masalara Özel Çay Fiyatı (10 TL) Ayarlama Modalı -->
+  <!-- Masalara Özel Çay & Çay Ürünleri Fiyatı (10 TL) Ayarlama Modalı -->
   <div class="modal-overlay" id="customTeaPriceModal">
-    <div class="modal-content" style="max-width: 720px; max-height: 90vh; display: flex; flex-direction: column;">
+    <div class="modal-content" style="max-width: 740px; max-height: 90vh; display: flex; flex-direction: column;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
         <div>
           <h3 style="color: #10b981; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.3rem;">
-            <span>☕</span> Masalara Özel Çay Fiyatı Belirle
+            <span>☕</span> Çay & Çay Ürünleri Fiyat Ayarları
           </h3>
           <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
-            Belirlediğiniz masalarda garson sipariş girdiğinde çay otomatik olarak belirlediğiniz fiyattan (örn: 10 ₺) yazılır.
+            Çay, Oralet, Kuşburnu, Adaçayı ve Ihlamur için genel menü fiyatı (15 ₺) ve bazı masalara özel indirimli fiyat (10 ₺) ayarı.
           </div>
         </div>
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeCustomTeaPriceModal()">✕</button>
       </div>
 
-      <!-- Bilgi ve Hızlı Toplu Ayar Kutusu -->
+      <!-- 1. BÖLÜM: GENEL MENÜ FİYATI (STANDART 15 TL) -->
+      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-size: 0.9rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              <span>🏠</span> Genel Menü Satış Fiyatı:
+              <input type="number" id="generalTeaPriceInput" value="15" step="0.5" min="0" style="width: 70px; padding: 4px 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 4px; color: #fbbf24; font-weight: 800; font-size: 1.05rem; text-align: center; margin-left: 4px;">
+              <span style="font-weight: 800; color: #fbbf24;">₺</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 3px;">
+              Normal masalarda geçerli olan standart fiyattır (Çay, Oraletler, Bitki Çayları).
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-warning" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 800;" onclick="updateGeneralTeaPrice()">
+              💾 Genel Fiyatı Güncelle (15 ₺ Yap)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. BÖLÜM: BAZI MASALARA ÖZEL İNDİRİMLİ FİYAT (10 TL) -->
       <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+        <div style="font-size: 0.85rem; font-weight: 700; color: #34d399; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>🌟</span> Bazı Masalara Özel Fiyat (İndirimli Masalar):
+        </div>
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div style="display: flex; align-items: center;">
-            <span style="font-size: 0.85rem; color: #fff; font-weight: 600;">Uygulanacak Fiyat:</span>
+            <span style="font-size: 0.85rem; color: #fff; font-weight: 600;">Özel Masa Fiyatı:</span>
             <input type="number" id="bulkTeaPriceTarget" value="10" step="0.5" min="0" style="width: 70px; padding: 5px 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 4px; color: #10b981; font-weight: 800; font-size: 1rem; text-align: center; margin-left: 8px;">
             <span style="font-weight: 700; color: #10b981; margin-left: 4px;">₺</span>
           </div>
@@ -503,7 +528,7 @@
               ★ Tüm Masaları 10 ₺ Yap
             </button>
             <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem; color: #f87171; border-color: rgba(248,113,113,0.4);" onclick="resetSelectedTeaPrices()" title="Seçilenleri Standart Menü Fiyatına Döndür">
-              ✕ Sıfırla (Standart)
+              ✕ Standart (15 ₺) Yap
             </button>
           </div>
         </div>

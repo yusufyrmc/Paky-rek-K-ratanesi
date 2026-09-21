@@ -274,6 +274,31 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
+// Genel Çay & Çay Ürünleri Fiyatını Güncelle (Örn: 15 TL)
+app.post('/api/products/bulk-tea-price', async (req, res) => {
+  try {
+    const { price } = req.body;
+    if (price == null || isNaN(price)) {
+      return res.status(400).json({ success: false, error: 'Geçerli bir fiyat belirtilmelidir' });
+    }
+
+    const newPrice = parseFloat(price);
+    await run(`
+      UPDATE products 
+      SET price = ? 
+      WHERE id = 1 
+         OR name = 'Çay' 
+         OR name LIKE 'Oralet%' 
+         OR name IN ('Kuşburnu', 'Adaçayı', 'Ihlamur')
+    `, [newPrice]);
+
+    io.emit('menu_changed');
+    res.json({ success: true, message: `Genel çay ve çay ürünleri fiyatı ${newPrice.toFixed(2)} ₺ olarak güncellendi.` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Ocak Ekranı İçin Aktif Siparişler
 app.get('/api/orders/active', async (req, res) => {
   try {

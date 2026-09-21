@@ -119,15 +119,15 @@
         <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeOptionsModal()">✕</button>
       </div>
 
-      <!-- Çay Özel Fiyat Seçimi (Sadece Çayda Görünür) -->
+      <!-- Çay & Çay Ürünleri Özel Fiyat Seçimi -->
       <div id="modalTeaPriceRow" style="display: none; margin-top: 14px; background: rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">☕ Çay Birim Fiyatı:</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">☕ Çay / Çay Ürünleri Birim Fiyatı:</div>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn" id="modalBtnTea10" onclick="selectModalTeaPrice(10)" style="flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;">
             ☕ 10.00 ₺ (Özel)
           </button>
-          <button type="button" class="btn" id="modalBtnTeaStd" onclick="selectModalTeaPrice(selectedProduct ? selectedProduct.price : 10)" style="flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;">
-            Standart (<span id="modalTeaStdPriceLabel">10</span> ₺)
+          <button type="button" class="btn" id="modalBtnTeaStd" onclick="selectModalTeaPrice(selectedProduct ? selectedProduct.price : 15)" style="flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;">
+            Standart (<span id="modalTeaStdPriceLabel">15</span> ₺)
           </button>
         </div>
       </div>

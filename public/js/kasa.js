@@ -1095,7 +1095,50 @@ function openCustomTeaPriceModal() {
   isFilterOnlySpecialTea = false;
   const filterBtn = document.getElementById('btnFilterOnlySpecialTea');
   if (filterBtn) filterBtn.className = 'btn btn-outline';
+
+  // Genel menü çay fiyatını kutucuğa doldur
+  const generalInput = document.getElementById('generalTeaPriceInput');
+  if (generalInput) {
+    generalInput.value = getGeneralTeaPrice();
+  }
+
   renderCustomTeaPriceList();
+}
+
+function getGeneralTeaPrice() {
+  for (const cat of rawMenuData) {
+    const p = cat.products.find(x => x.id === 1 || x.name === 'Çay');
+    if (p) return p.price;
+  }
+  return 15;
+}
+
+async function updateGeneralTeaPrice() {
+  const priceInput = document.getElementById('generalTeaPriceInput');
+  const price = priceInput ? parseFloat(priceInput.value) : 15;
+  if (isNaN(price) || price < 0) {
+    showToast('Lütfen geçerli bir fiyat girin!', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/products/bulk-tea-price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ price })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✓ Genel çay ve çay ürünleri fiyatı ${price.toFixed(2)} ₺ yapıldı!`, 'success');
+      await loadMenuForManage();
+      await loadTables();
+      renderCustomTeaPriceList();
+    } else {
+      showToast('Güncellenemedi: ' + data.error, 'danger');
+    }
+  } catch (err) {
+    showToast('Bağlantı hatası', 'danger');
+  }
 }
 
 function closeCustomTeaPriceModal() {
@@ -1141,6 +1184,8 @@ function renderCustomTeaPriceList() {
     return;
   }
 
+  const generalPrice = getGeneralTeaPrice();
+
   container.innerHTML = list.map(t => {
     const hasSpecial = t.custom_tea_price != null && t.custom_tea_price > 0;
     return `
@@ -1155,7 +1200,7 @@ function renderCustomTeaPriceList() {
             <div style="font-size: 0.8rem; margin-top: 2px;">
               ${hasSpecial 
                 ? `<span style="color: #34d399; font-weight: 700;">☕ Özel Fiyat: ${t.custom_tea_price.toFixed(2)} ₺</span>` 
-                : `<span style="color: var(--text-secondary);">Standart Menü Fiyatı</span>`}
+                : `<span style="color: var(--text-secondary);">Standart Menü: ${generalPrice.toFixed(2)} ₺</span>`}
             </div>
           </div>
         </div>
@@ -1163,7 +1208,7 @@ function renderCustomTeaPriceList() {
         <div style="display: flex; align-items: center; gap: 8px;">
           ${hasSpecial ? `
             <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; color: #f87171; border-color: rgba(248,113,113,0.4);" onclick="setSingleTableTeaPrice(${t.id}, null)">
-              ✕ Standart Yap
+              ✕ Standart (${generalPrice.toFixed(0)} ₺) Yap
             </button>
           ` : `
             <button class="btn btn-success" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700;" onclick="setSingleTableTeaPrice(${t.id}, 10)">

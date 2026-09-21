@@ -190,9 +190,9 @@ async function initDatabase() {
 
     // Ürünler
     const products = [
-      { cat: sicaklar.id, name: 'Çay', price: 10, notes: defaultNotesCay },
-      { cat: sicaklar.id, name: 'Oralet (Portakal)', price: 12, notes: JSON.stringify(["Sıcak", "Ilık"]) },
-      { cat: sicaklar.id, name: 'Oralet (Kivi)', price: 12, notes: JSON.stringify(["Sıcak", "Ilık"]) },
+      { cat: sicaklar.id, name: 'Çay', price: 15, notes: defaultNotesCay },
+      { cat: sicaklar.id, name: 'Oralet (Portakal)', price: 15, notes: JSON.stringify(["Sıcak", "Ilık"]) },
+      { cat: sicaklar.id, name: 'Oralet (Kivi)', price: 15, notes: JSON.stringify(["Sıcak", "Ilık"]) },
       { cat: sicaklar.id, name: 'Kuşburnu', price: 15, notes: defaultNotesCay },
       { cat: sicaklar.id, name: 'Adaçayı', price: 15, notes: JSON.stringify(["Limonlu", "Ballı"]) },
       { cat: sicaklar.id, name: 'Ihlamur', price: 15, notes: JSON.stringify(["Limonlu", "Ballı"]) },

@@ -15,11 +15,15 @@ let modalQuantity = 1;
 let selectedNotes = new Set();
 let modalUnitPrice = 0;
 
-// Çay Ürününü ve Fiyatını Tespit Eden Yardımcılar
+// Çay ve Çay Ürünlerini (Oralet, Kuşburnu, Adaçayı, Ihlamur vb.) Tespit Eden Yardımcılar
 function isTeaProduct(prod) {
   if (!prod || !prod.name) return false;
   const n = prod.name.trim().toLowerCase();
-  return n === 'çay' || n === 'cay' || n.startsWith('çay ') || n.startsWith('cay ');
+  return n.includes('çay') || n.includes('cay') ||
+         n.includes('oralet') ||
+         n.includes('kuşburnu') || n.includes('kusburnu') ||
+         n.includes('adaçayı') || n.includes('adacayi') ||
+         n.includes('ıhlamur') || n.includes('ihlamur');
 }
 
 function getProductEffectivePrice(prod) {
