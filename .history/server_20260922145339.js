@@ -17,6 +17,17 @@ const io = socketIo(server, {
   }
 });
 
+initDatabase()
+  .then(() => {
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`Sunucu ${PORT} portunda çalışıyor.`);
+    });
+  })
+  .catch((error) => {
+    console.error('Sunucu başlatılamadı:', error);
+    process.exit(1);
+  });
+
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -957,20 +968,3 @@ app.post('/api/merchants/:id/order', async (req, res) => {
       io.emit('new_order', fullOrder);
       io.emit('tables_changed');
     }
-
-    res.json({ success: true, orderTotal, message: 'Çetele kaydedildi' });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-initDatabase()
-  .then(() => {
-    server.listen(PORT, '0.0.0.0', () => {
-      console.log(`Sunucu ${PORT} portunda çalışıyor.`);
-    });
-  })
-  .catch((error) => {
-    console.error('Sunucu başlatılamadı:', error);
-    process.exit(1);
-  });
