@@ -377,15 +377,6 @@ async function allSupabase(sql, params = []) {
     throwIf(error, 'esnaf hareketleri');
     return coerceRows(data);
   }
-  if (/^SELECT \* FROM merchant_product_prices WHERE merchant_id = \? ORDER BY product_id ASC$/i.test(s)) {
-    const { data, error } = await supabase
-      .from('merchant_product_prices')
-      .select('*')
-      .eq('merchant_id', params[0])
-      .order('product_id', { ascending: true });
-    throwIf(error, 'esnaf özel fiyatları');
-    return coerceRows(data);
-  }
 
   throw new Error('Supabase için tanınmayan SQL (all): ' + s);
 }
