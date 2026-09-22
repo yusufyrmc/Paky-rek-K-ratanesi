@@ -63,9 +63,9 @@ async function sbInsert(table, payload) {
 async function sbUpdate(table, payload, applyFilters) {
   let q = supabase.from(table).update(payload);
   q = applyFilters(q);
-  const { data, error } = await q.select('id');
+  const { error, count } = await q.select('id');
   throwIf(error, `update ${table}`);
-  return { lastID: 0, changes: Array.isArray(data) ? data.length : 0 };
+  return { lastID: 0, changes: Array.isArray(count) ? count.length : 1 };
 }
 
 async function sbDelete(table, applyFilters) {
