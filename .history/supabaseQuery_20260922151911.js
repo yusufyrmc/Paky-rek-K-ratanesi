@@ -290,16 +290,10 @@ async function allSupabase(sql, params = []) {
     throwIf(error, 'kategoriler');
     return coerceRows(data);
   }
-  if (s.includes('SELECT * FROM products WHERE is_active = 1') && s.includes('ORDER BY category_id, sort_order ASC')) {
-    const { data, error } = await supabase.from('products').select('*').eq('is_active', 1);
+  if (/^SELECT \* FROM products WHERE is_active = 1 ORDER BY category_id, name ASC$/i.test(s)) {
+    const { data, error } = await supabase.from('products').select('*').eq('is_active', 1).order('name', { ascending: true });
     throwIf(error, 'ürünler');
-    return coerceRows(data).sort((a, b) =>
-      Number(a.category_id || 0) - Number(b.category_id || 0) ||
-      Number(a.sort_order || 0) - Number(b.sort_order || 0) ||
-      (String(a.name).toLocaleLowerCase('tr') === 'çay' ? -1 : 0) -
-      (String(b.name).toLocaleLowerCase('tr') === 'çay' ? -1 : 0) ||
-      String(a.name).localeCompare(String(b.name), 'tr')
-    );
+    return coerceRows(data);
   }
   if (s.includes('SELECT * FROM orders') && s.includes("status IN ('pending', 'preparing', 'ready', 'approved')")) {
     const { data, error } = await supabase
