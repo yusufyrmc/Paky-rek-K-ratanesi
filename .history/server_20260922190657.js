@@ -707,28 +707,6 @@ app.get('/api/reports/daily', async (req, res) => {
   }
 });
 
-// Garsonların son siparişleri (unutulan siparişi kontrol etmek için)
-app.get('/api/orders/recent', async (req, res) => {
-  try {
-    const requestedLimit = Number.parseInt(req.query.limit, 10);
-    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 30;
-    const orders = await all(`
-      SELECT * FROM orders
-      WHERE status != 'cancelled'
-      ORDER BY created_at DESC, id DESC
-      LIMIT ${limit}
-    `);
-
-    for (const order of orders) {
-      order.items = await all('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
-    }
-
-    res.json({ success: true, data: orders });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 // ---------------- GARSON YÖNETİMİ ENDPOINTS ----------------
 
 // Tüm Garsonları Listele

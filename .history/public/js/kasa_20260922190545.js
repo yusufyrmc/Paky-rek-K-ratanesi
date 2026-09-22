@@ -6,52 +6,6 @@ let rawMenuData = [];
 let isRevenueHidden = localStorage.getItem('pakyurek_hide_revenue') === 'true';
 let latestDailySummary = { total: 0, nakit: 0, kart: 0, transaction_count: 0 };
 
-function formatOrderStatus(status) {
-  const labels = { approved: 'AÇIK', preparing: 'HAZIRLANIYOR', ready: 'HAZIR', completed: 'ÖDENDİ' };
-  return labels[status] || status.toUpperCase();
-}
-
-function formatOrderDate(value) {
-  return new Date(value).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
-async function openRecentOrdersModal() {
-  document.getElementById('recentOrdersModal').classList.add('active');
-  const list = document.getElementById('recentOrdersList');
-  list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 24px;">Siparişler yükleniyor...</div>';
-
-  try {
-    const res = await fetch('/api/orders/recent?limit=30');
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Siparişler alınamadı');
-    if (!data.data.length) {
-      list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 24px;">Henüz sipariş bulunmuyor.</div>';
-      return;
-    }
-
-    list.innerHTML = data.data.map(order => `
-      <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-left: 3px solid ${order.status === 'completed' ? '#10b981' : 'var(--primary)'}; border-radius: 8px; padding: 10px 12px;">
-        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 5px;">
-          <strong style="color: #fff;">${escapeHtml(order.table_name)}</strong>
-          <span style="font-size: 0.75rem; color: var(--text-secondary);">${formatOrderDate(order.created_at)}</span>
-        </div>
-        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px;">Garson: ${escapeHtml(order.waiter_name || 'Garson')} · ${formatOrderStatus(order.status)}</div>
-        <div style="display: flex; justify-content: space-between; gap: 10px;">
-          <span style="color: #e2e8f0;">${(order.items || []).map(item => `${item.quantity}x ${escapeHtml(item.product_name)}`).join(', ')}</span>
-          <strong style="color: var(--primary); white-space: nowrap;">${Number(order.total_amount || 0).toFixed(2)} ₺</strong>
-        </div>
-      </div>
-    `).join('');
-  } catch (err) {
-    console.error('Son siparişler alınamadı:', err);
-    list.innerHTML = `<div style="text-align: center; color: #fca5a5; padding: 24px;">Son siparişler alınamadı.</div>`;
-  }
-}
-
-function closeRecentOrdersModal() {
-  document.getElementById('recentOrdersModal').classList.remove('active');
-}
-
 // Tüm Verileri Yükle
 async function loadAllData() {
   await Promise.all([

@@ -32,9 +32,6 @@
       <button class="btn btn-outline" onclick="loadAllData()" title="Yenile">
         🔄
       </button>
-      <button class="btn btn-outline" onclick="openRecentOrdersModal()" title="Garsonların son siparişlerini göster">
-        🧾 Son Siparişler
-      </button>
       <button class="btn btn-outline" style="color: #a78bfa; border-color: #a78bfa;" onclick="openManageWaitersModal()" title="Kasa Üzerinden Garson Ekle ve Sil">
         👤 Garson Ekle / Sil
       </button>
@@ -177,19 +174,6 @@
   </div>
 
   <!-- ================= MODALLAR ================= -->
-
-  <!-- Son siparişler modalı -->
-  <div class="modal-overlay" id="recentOrdersModal">
-    <div class="modal-content" style="max-width: 680px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="color: var(--primary); margin: 0;">🧾 Son Siparişler</h3>
-        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeRecentOrdersModal()">✕</button>
-      </div>
-      <div id="recentOrdersList" style="max-height: 65vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        <div style="text-align: center; color: var(--text-secondary); padding: 24px;">Siparişler yükleniyor...</div>
-      </div>
-    </div>
-  </div>
 
   <!-- Kısmi ödeme modalı -->
   <div class="modal-overlay" id="partialPaymentModal">

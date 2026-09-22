@@ -485,19 +485,6 @@ async function allSupabase(sql, params = []) {
     throwIf(error, 'esnaf hareketleri');
     return coerceRows(data);
   }
-  if (s.includes('FROM orders') && s.includes("status != 'cancelled'") && s.includes('ORDER BY created_at DESC') && s.includes('LIMIT')) {
-    const limitMatch = s.match(/LIMIT (\d+)$/i);
-    const limit = limitMatch ? Number(limitMatch[1]) : 30;
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .neq('status', 'cancelled')
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(limit);
-    throwIf(error, 'son siparişler');
-    return coerceRows(data);
-  }
   if (s.includes('FROM merchant_product_prices WHERE merchant_id = ?') && s.includes('ORDER BY product_id ASC')) {
     const { data, error } = await supabase
       .from('merchant_product_prices')
