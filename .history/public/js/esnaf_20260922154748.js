@@ -704,7 +704,6 @@ async function deleteMerchant(merchantId, name) {
     const data = await res.json();
     if (data.success) {
       showToast(`🗑️ "${name}" esnafı silindi.`, 'info');
-      closeDeleteMerchantModal();
       loadMerchants();
       loadSummary();
     } else {
