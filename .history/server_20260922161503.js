@@ -108,6 +108,7 @@ app.get('/api/info', async (req, res) => {
       qrCode: qrCodeDataUrl
     });
   } catch (error) {
+    console.error('Esnaf çetele/sipariş kayıt hatası:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -963,7 +964,6 @@ app.post('/api/merchants/:id/order', async (req, res) => {
 
     res.json({ success: true, orderTotal, message: 'Çetele kaydedildi' });
   } catch (error) {
-    console.error('Esnaf çetele/sipariş kayıt hatası:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
