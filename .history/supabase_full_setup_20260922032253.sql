@@ -115,7 +115,6 @@ ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE merchants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE merchant_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE waiters ENABLE ROW LEVEL SECURITY;
-ALTER TABLE merchant_product_prices ENABLE ROW LEVEL SECURITY;
 
 DO $$ 
 BEGIN
@@ -142,9 +141,6 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Herkes merchant_transactions okuyup yazabilir') THEN
     CREATE POLICY "Herkes merchant_transactions okuyup yazabilir" ON merchant_transactions FOR ALL USING (true) WITH CHECK (true);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Herkes merchant_product_prices okuyup yazabilir') THEN
-    CREATE POLICY "Herkes merchant_product_prices okuyup yazabilir" ON merchant_product_prices FOR ALL USING (true) WITH CHECK (true);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Herkes waiters okuyup yazabilir') THEN
     CREATE POLICY "Herkes waiters okuyup yazabilir" ON waiters FOR ALL USING (true) WITH CHECK (true);

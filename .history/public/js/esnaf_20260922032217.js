@@ -787,12 +787,11 @@ async function saveMerchantPricing() {
     });
     const data = await res.json();
     if (data.success) {
-      const activeMerchantId = selectedMerchantForPricing.id;
       showToast('✓ Esnaf menü fiyatları kaydedildi', 'success');
       closeMerchantPricingModal();
       loadMerchants();
-      if (selectedMerchantForOrder && selectedMerchantForOrder.id === activeMerchantId) {
-        openCustomOrderModal(activeMerchantId);
+      if (selectedMerchantForOrder && selectedMerchantForOrder.id === selectedMerchantForPricing.id) {
+        openCustomOrderModal(selectedMerchantForPricing.id);
       }
     } else {
       showToast(data.error || 'Fiyat kaydedilemedi', 'danger');

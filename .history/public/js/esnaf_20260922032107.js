@@ -484,13 +484,12 @@ async function saveMerchant() {
 }
 
 // 8. Menüden Detaylı Sipariş Modalı
-async function openCustomOrderModal(merchantId) {
+function openCustomOrderModal(merchantId) {
   const merchant = allMerchants.find(m => m.id === merchantId);
   if (!merchant) return;
 
   selectedMerchantForOrder = merchant;
   customOrderQuantities = {};
-  await loadMerchantPriceMap(merchantId);
 
   document.getElementById('customOrderMerchantName').textContent = `${merchant.name} (${merchant.shop_type || 'Esnaf'})`;
   renderCustomOrderItems();
@@ -514,12 +513,11 @@ function renderCustomOrderItems() {
 
   container.innerHTML = allProducts.map(p => {
     const qty = customOrderQuantities[p.id] || 0;
-    const price = selectedMerchantForOrder ? getEffectiveProductPrice(p, selectedMerchantForOrder.id) : Number(p.price || 0);
     return `
       <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px;">
         <div>
           <div style="font-weight: 700; color: #fff;">${escapeHtml(p.name)}</div>
-          <div style="font-size: 0.8rem; color: var(--text-secondary);">${price.toFixed(2)} ₺</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">${p.price.toFixed(2)} ₺</div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <button class="qty-btn" style="width: 28px; height: 28px; font-size: 0.9rem;" onclick="changeCustomOrderQty(${p.id}, -1)">-</button>
@@ -548,8 +546,7 @@ function updateCustomOrderTotal() {
   menuData.forEach(cat => {
     (cat.products || []).forEach(p => {
       if (customOrderQuantities[p.id]) {
-        const price = selectedMerchantForOrder ? getEffectiveProductPrice(p, selectedMerchantForOrder.id) : Number(p.price || 0);
-        total += (customOrderQuantities[p.id] * price);
+        total += (customOrderQuantities[p.id] * p.price);
       }
     });
   });
@@ -563,12 +560,11 @@ async function submitCustomOrder() {
   menuData.forEach(cat => {
     (cat.products || []).forEach(p => {
       if (customOrderQuantities[p.id]) {
-        const price = getEffectiveProductPrice(p, selectedMerchantForOrder.id);
         items.push({
           product_id: p.id,
           product_name: p.name,
           quantity: customOrderQuantities[p.id],
-          unit_price: price
+          unit_price: p.price
         });
       }
     });
@@ -681,124 +677,3 @@ window.addEventListener('DOMContentLoaded', () => {
   loadAllData();
   setupSocket();
 });
-
-// 4.5 Esnaf Silme ve Menü Fiyatları
-async function deleteMerchant(merchantId, name) {
-  const confirmed = confirm(`"${name}" isimli esnafı silmek istediğinize emin misiniz?\n\n⚠️ Bu işlem esnafın tüm çetele ve ödeme kayıtlarını da silecektir.`);
-  if (!confirmed) return;
-
-  try {
-    const res = await fetch(`/api/merchants/${merchantId}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.success) {
-      showToast(`🗑️ "${name}" esnafı silindi.`, 'info');
-      loadMerchants();
-      loadSummary();
-    } else {
-      showToast(data.error || 'Esnaf silinemedi', 'danger');
-    }
-  } catch (err) {
-    console.error('Esnaf silme hatası:', err);
-    showToast('Silme işlemi sırasında hata oluştu', 'danger');
-  }
-}
-
-function getEffectiveProductPrice(product, merchantId) {
-  const prices = currentMerchantPriceMap[merchantId] || {};
-  const override = prices[product.id];
-  return override != null && override !== '' ? Number(override) : Number(product.price || 0);
-}
-
-async function loadMerchantPriceMap(merchantId) {
-  try {
-    const res = await fetch(`/api/merchants/${merchantId}/prices`);
-    const data = await res.json();
-    if (data.success) {
-      const prices = {};
-      (data.data || []).forEach(item => {
-        prices[item.id] = item.custom_price != null ? Number(item.custom_price) : null;
-      });
-      currentMerchantPriceMap[merchantId] = prices;
-      return prices;
-    }
-    return {};
-  } catch (err) {
-    console.error('Esnaf fiyat listesi alınamadı:', err);
-    return {};
-  }
-}
-
-async function openMerchantPricingModal(merchantId) {
-  const merchant = allMerchants.find(m => m.id === merchantId);
-  if (!merchant) return;
-
-  selectedMerchantForPricing = merchant;
-  document.getElementById('merchantPricingMerchantName').textContent = `${merchant.name} (${merchant.shop_type || 'Esnaf'})`;
-
-  const prices = await loadMerchantPriceMap(merchantId);
-  const listContainer = document.getElementById('merchantPricingList');
-  const allProducts = [];
-  menuData.forEach(cat => {
-    (cat.products || []).forEach(p => allProducts.push({ ...p, category_name: cat.name }));
-  });
-
-  listContainer.innerHTML = allProducts.map(p => {
-    const value = prices[p.id] != null ? prices[p.id].toFixed(2) : '';
-    return `
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(255,255,255,0.03); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-weight: 700; color: #fff;">${escapeHtml(p.name)}</div>
-          <div style="font-size: 0.8rem; color: var(--text-secondary);">Standart: ${Number(p.price || 0).toFixed(2)} ₺</div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <label style="font-size: 0.78rem; color: var(--text-secondary);">Fiyat</label>
-          <input type="number" min="0" step="0.5" value="${value}" data-product-id="${p.id}" placeholder="${Number(p.price || 0).toFixed(2)}" style="width: 110px; padding: 8px 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  document.getElementById('merchantPricingModal').classList.add('active');
-}
-
-function closeMerchantPricingModal() {
-  document.getElementById('merchantPricingModal').classList.remove('active');
-  selectedMerchantForPricing = null;
-}
-
-async function saveMerchantPricing() {
-  if (!selectedMerchantForPricing) return;
-
-  const inputs = document.querySelectorAll('#merchantPricingList input[data-product-id]');
-  const items = Array.from(inputs).map(input => {
-    const productId = Number(input.dataset.productId);
-    const customPrice = input.value.trim();
-    return {
-      product_id: productId,
-      custom_price: customPrice === '' ? null : customPrice
-    };
-  }).filter(item => item.product_id != null);
-
-  try {
-    const res = await fetch(`/api/merchants/${selectedMerchantForPricing.id}/prices`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items })
-    });
-    const data = await res.json();
-    if (data.success) {
-      const activeMerchantId = selectedMerchantForPricing.id;
-      showToast('✓ Esnaf menü fiyatları kaydedildi', 'success');
-      closeMerchantPricingModal();
-      loadMerchants();
-      if (selectedMerchantForOrder && selectedMerchantForOrder.id === activeMerchantId) {
-        openCustomOrderModal(activeMerchantId);
-      }
-    } else {
-      showToast(data.error || 'Fiyat kaydedilemedi', 'danger');
-    }
-  } catch (err) {
-    console.error('Esnaf menu fiyat kaydetme hatası:', err);
-    showToast('Bağlantı hatası oluştu', 'danger');
-  }
-}

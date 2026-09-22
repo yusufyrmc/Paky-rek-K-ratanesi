@@ -484,13 +484,12 @@ async function saveMerchant() {
 }
 
 // 8. Menüden Detaylı Sipariş Modalı
-async function openCustomOrderModal(merchantId) {
+function openCustomOrderModal(merchantId) {
   const merchant = allMerchants.find(m => m.id === merchantId);
   if (!merchant) return;
 
   selectedMerchantForOrder = merchant;
   customOrderQuantities = {};
-  await loadMerchantPriceMap(merchantId);
 
   document.getElementById('customOrderMerchantName').textContent = `${merchant.name} (${merchant.shop_type || 'Esnaf'})`;
   renderCustomOrderItems();
@@ -514,12 +513,11 @@ function renderCustomOrderItems() {
 
   container.innerHTML = allProducts.map(p => {
     const qty = customOrderQuantities[p.id] || 0;
-    const price = selectedMerchantForOrder ? getEffectiveProductPrice(p, selectedMerchantForOrder.id) : Number(p.price || 0);
     return `
       <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px;">
         <div>
           <div style="font-weight: 700; color: #fff;">${escapeHtml(p.name)}</div>
-          <div style="font-size: 0.8rem; color: var(--text-secondary);">${price.toFixed(2)} ₺</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">${p.price.toFixed(2)} ₺</div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <button class="qty-btn" style="width: 28px; height: 28px; font-size: 0.9rem;" onclick="changeCustomOrderQty(${p.id}, -1)">-</button>
@@ -548,8 +546,7 @@ function updateCustomOrderTotal() {
   menuData.forEach(cat => {
     (cat.products || []).forEach(p => {
       if (customOrderQuantities[p.id]) {
-        const price = selectedMerchantForOrder ? getEffectiveProductPrice(p, selectedMerchantForOrder.id) : Number(p.price || 0);
-        total += (customOrderQuantities[p.id] * price);
+        total += (customOrderQuantities[p.id] * p.price);
       }
     });
   });
@@ -563,12 +560,11 @@ async function submitCustomOrder() {
   menuData.forEach(cat => {
     (cat.products || []).forEach(p => {
       if (customOrderQuantities[p.id]) {
-        const price = getEffectiveProductPrice(p, selectedMerchantForOrder.id);
         items.push({
           product_id: p.id,
           product_name: p.name,
           quantity: customOrderQuantities[p.id],
-          unit_price: price
+          unit_price: p.price
         });
       }
     });
@@ -787,12 +783,11 @@ async function saveMerchantPricing() {
     });
     const data = await res.json();
     if (data.success) {
-      const activeMerchantId = selectedMerchantForPricing.id;
       showToast('✓ Esnaf menü fiyatları kaydedildi', 'success');
       closeMerchantPricingModal();
       loadMerchants();
-      if (selectedMerchantForOrder && selectedMerchantForOrder.id === activeMerchantId) {
-        openCustomOrderModal(activeMerchantId);
+      if (selectedMerchantForOrder && selectedMerchantForOrder.id === selectedMerchantForPricing.id) {
+        openCustomOrderModal(selectedMerchantForPricing.id);
       }
     } else {
       showToast(data.error || 'Fiyat kaydedilemedi', 'danger');
