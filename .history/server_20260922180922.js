@@ -379,7 +379,7 @@ app.post('/api/products/bulk-tea-price', async (req, res) => {
   }
 });
 
-// Aktif siparişler
+// Ocak Ekranı İçin Aktif Siparişler
 app.get('/api/orders/active', async (req, res) => {
   try {
     const orders = await all(`
@@ -457,7 +457,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Sipariş durumu güncelleme
+// Sipariş Durumu Güncelleme (Ocakçı "Hazırlanıyor", "Hazır", "Teslim Edildi" yapar)
 app.put('/api/orders/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
@@ -887,18 +887,6 @@ app.put('/api/merchants/:id/prices', async (req, res) => {
   }
 });
 
-async function refreshMerchantBalance(merchantId) {
-  const totals = await get(`
-    SELECT COALESCE(SUM(CASE WHEN type = 'order' THEN amount ELSE 0 END), 0) -
-           COALESCE(SUM(CASE WHEN type = 'payment' THEN amount ELSE 0 END), 0) AS balance
-    FROM merchant_transactions
-    WHERE merchant_id = ?
-  `, [merchantId]);
-
-  await run('UPDATE merchants SET balance = ? WHERE id = ?', [totals.balance || 0, merchantId]);
-  return totals.balance || 0;
-}
-
 // Esnafın Hareket Geçmişi (Çetele & Tahsilat Listesi)
 app.get('/api/merchants/:id/transactions', async (req, res) => {
   try {
@@ -914,29 +902,6 @@ app.get('/api/merchants/:id/transactions', async (req, res) => {
     `, [id]);
 
     res.json({ success: true, merchant, transactions });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Esnaf ekstresindeki hatalı sipariş hareketini sil
-app.delete('/api/merchants/:merchantId/transactions/:transactionId', async (req, res) => {
-  try {
-    const { merchantId, transactionId } = req.params;
-    const transaction = await get(
-      "SELECT * FROM merchant_transactions WHERE id = ? AND merchant_id = ? AND type = 'order'",
-      [transactionId, merchantId]
-    );
-
-    if (!transaction) {
-      return res.status(404).json({ success: false, error: 'Silinecek sipariş hareketi bulunamadı' });
-    }
-
-    await run('DELETE FROM merchant_transactions WHERE id = ?', [transactionId]);
-    const balance = await refreshMerchantBalance(merchantId);
-
-    io.emit('merchants_changed');
-    res.json({ success: true, balance, message: 'Sipariş ekstreden silindi ve esnaf bakiyesi yenilendi' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -987,30 +952,23 @@ app.post('/api/merchants/:id/order', async (req, res) => {
 
     const description = itemSummaries.join(', ') + (note ? ` (${note})` : '');
 
-    // Esnaf çetelesini doğrudan onaylı sipariş olarak kaydet
+    // Eğer ocağa iletilsin istenmişse (Ocak ekranına sesli ve canlı düşsün!)
     if (notify_kitchen !== false) {
       const orderResult = await run(`
         INSERT INTO orders (table_id, table_name, waiter_name, status, total_amount, created_at, updated_at)
-        VALUES (?, ?, ?, 'approved', ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
+        VALUES (?, ?, ?, 'pending', ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
       `, [0, `[Esnaf] ${merchant.name}`, waiter_name || 'Esnaf Paneli', orderTotal]);
 
       const orderId = orderResult.lastID;
       for (const it of normalizedItems) {
         await run(`
           INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, note, status)
-          VALUES (?, ?, ?, ?, ?, ?, 'approved')
+          VALUES (?, ?, ?, ?, ?, ?, 'pending')
         `, [orderId, it.product_id || null, it.product_name, it.quantity, it.unit_price, note || '']);
       }
 
       const fullOrder = await get('SELECT * FROM orders WHERE id = ?', [orderId]);
       fullOrder.items = await all('SELECT * FROM order_items WHERE order_id = ?', [orderId]);
-
-      await run(`
-        INSERT INTO merchant_transactions (merchant_id, type, amount, description, waiter_name, created_at)
-        VALUES (?, 'order', ?, ?, ?, datetime('now', 'localtime'))
-      `, [merchant.id, orderTotal, `Sipariş #${orderId} - ${description}`, waiter_name || 'Esnaf Paneli']);
-      await refreshMerchantBalance(merchant.id);
-      await run("UPDATE orders SET charged_at = datetime('now', 'localtime') WHERE id = ?", [orderId]);
 
       io.emit('new_order', fullOrder);
       io.emit('tables_changed');

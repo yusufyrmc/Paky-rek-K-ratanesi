@@ -4,6 +4,7 @@ let menuData = [];
 let tablesData = [];
 let currentCategory = 'all';
 let selectedTable = null;
+let currentSectionFilter = 'İçerisi';
 
 // Sepet
 let cart = [];
@@ -656,9 +657,33 @@ function closeTableModal() {
   document.getElementById('tableModal').classList.remove('active');
 }
 
+function filterTableSection(section) {
+  currentSectionFilter = section;
+  const tabIcerisi = document.getElementById('tabIcerisi');
+  const tabBahce = document.getElementById('tabBahce');
+  const tabDisarisi = document.getElementById('tabDisarisi');
+  const tabAll = document.getElementById('tabAll');
+
+  if (tabIcerisi) tabIcerisi.className = section === 'İçerisi' ? 'btn btn-primary' : 'btn btn-outline';
+  if (tabBahce) tabBahce.className = section === 'Bahçe' ? 'btn btn-primary' : 'btn btn-outline';
+  if (tabDisarisi) tabDisarisi.className = section === 'Dışarısı' ? 'btn btn-primary' : 'btn btn-outline';
+  if (tabAll) tabAll.className = section === 'All' ? 'btn btn-primary' : 'btn btn-outline';
+
+  renderTablesModal();
+}
+
 function renderTablesModal() {
   const container = document.getElementById('tablesModalGrid');
-  container.innerHTML = tablesData.map(t => {
+  let filtered = tablesData;
+  if (currentSectionFilter !== 'All') {
+    if (currentSectionFilter === 'İçerisi') {
+      filtered = tablesData.filter(t => t.section === 'İçerisi' || t.section === 'Salon');
+    } else {
+      filtered = tablesData.filter(t => t.section === currentSectionFilter);
+    }
+  }
+
+  container.innerHTML = filtered.map(t => {
     const isSelected = selectedTable && selectedTable.id === t.id;
     const isOccupied = t.status === 'occupied' || t.current_total > 0;
     const hasSpecial = isSpecialTable(t);
@@ -895,14 +920,14 @@ function setupSocket() {
     }
   });
 
-  // Sipariş durumu değiştiğinde telefona uyarı düşsün!
+  // Ocakçı siparişi "ONAYLADI" veya "İPTAL ETTİ" ise telefona uyarı düşsün!
   socket.on('order_status_updated', (data) => {
     if (data.status === 'cancelled') {
       if (navigator.vibrate) navigator.vibrate([150, 100, 150]);
-      showToast(`⚠️ ${data.order ? data.order.table_name : 'Masa'} siparişi İPTAL EDİLDİ!`, 'danger');
+      showToast(`⚠️ ${data.order ? data.order.table_name : 'Masa'} siparişi ocak tarafından İPTAL EDİLDİ!`, 'danger');
     } else if ((data.status === 'approved' || data.status === 'ready') && data.order) {
       if (navigator.vibrate) navigator.vibrate([100, 80, 100]);
-      showToast(`✓ ${data.order.table_name} siparişi güncellendi!`, 'success');
+      showToast(`✓ ${data.order.table_name} siparişi ocak tarafından ONAYLANDI!`, 'success');
     }
     loadTables();
     const adisyonModal = document.getElementById('adisyonModal');

@@ -362,7 +362,7 @@ async function viewStatement(merchantId) {
         listContainer.innerHTML = data.transactions.map(t => {
           const isOrder = t.type === 'order';
           return `
-            <div class="statement-item ${isOrder ? 'order' : 'payment'}" style="position: relative;">
+            <div class="statement-item ${isOrder ? 'order' : 'payment'}">
               <div>
                 <div style="font-weight: 700; color: #fff;">
                   ${isOrder ? '☕ Sipariş / Çetele' : '💵 Tahsilat Alındı'}
@@ -374,11 +374,8 @@ async function viewStatement(merchantId) {
                   🕒 ${formatDate(t.created_at)} · Yetkili: ${escapeHtml(t.waiter_name || 'Kasa')}
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
-                <div style="font-weight: 800; font-size: 1.15rem; color: ${isOrder ? '#f59e0b' : '#10b981'};">
-                  ${isOrder ? `+${t.amount.toFixed(2)} ₺` : `-${t.amount.toFixed(2)} ₺`}
-                </div>
-                ${isOrder ? `<button class="btn btn-outline" style="padding: 3px 7px; color: #fca5a5; border-color: rgba(239,68,68,0.45); font-size: 0.72rem; white-space: nowrap;" onclick="deleteMerchantTransaction(${m.id}, ${t.id})" title="Yanlış siparişi sil">🗑️ Sil</button>` : ''}
+              <div style="font-weight: 800; font-size: 1.15rem; color: ${isOrder ? '#f59e0b' : '#10b981'};">
+                ${isOrder ? `+${t.amount.toFixed(2)} ₺` : `-${t.amount.toFixed(2)} ₺`}
               </div>
             </div>
           `;
@@ -390,25 +387,6 @@ async function viewStatement(merchantId) {
   } catch (err) {
     console.error('Ekstre alınamadı:', err);
     showToast('Ekstre yüklenirken hata oluştu', 'danger');
-  }
-}
-
-async function deleteMerchantTransaction(merchantId, transactionId) {
-  if (!confirm('Bu yanlış sipariş kaydı ekstreden silinsin mi? Esnaf bakiyesi de yeniden hesaplanacak.')) return;
-
-  try {
-    const res = await fetch(`/api/merchants/${merchantId}/transactions/${transactionId}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (!data.success) {
-      showToast(data.error || 'Sipariş silinemedi', 'danger');
-      return;
-    }
-
-    showToast(`Sipariş silindi. Yeni bakiye: ${Number(data.balance || 0).toFixed(2)} ₺`, 'success');
-    await Promise.all([viewStatement(merchantId), loadMerchants(), loadSummary()]);
-  } catch (err) {
-    console.error('Esnaf siparişi silme hatası:', err);
-    showToast('Sipariş silinirken bağlantı hatası oluştu', 'danger');
   }
 }
 

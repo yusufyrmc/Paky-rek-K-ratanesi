@@ -54,6 +54,12 @@
       
       <div class="glass-panel kasa-tables-panel" id="kasaTablesPanel" style="padding: 16px;">
         <div class="tables-filter-bar">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btnFilterIcerisi" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('İçerisi')">🏠 İçerisi</button>
+            <button class="btn btn-outline" id="btnFilterBahce" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('Bahçe')">🌿 Bahçe</button>
+            <button class="btn btn-outline" id="btnFilterDisarisi" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('Dışarısı')">☀️ Dışarısı</button>
+            <button class="btn btn-outline" id="btnFilterAll" style="padding: 6px 12px; font-size: 0.85rem;" onclick="filterSection('All')">✨ Tümü</button>
+          </div>
           <span style="font-size: 0.85rem; color: var(--text-secondary);" id="occupiedCountLabel">Dolu Masalar: 0</span>
         </div>
 

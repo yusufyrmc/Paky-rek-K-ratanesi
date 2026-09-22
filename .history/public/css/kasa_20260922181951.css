@@ -65,12 +65,6 @@
   flex-wrap: wrap;
 }
 
-.kasa-tables-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 @media (min-width: 993px) {
   .kasa-tables-section {
     display: contents;
@@ -92,6 +86,12 @@
     grid-column: 1 / -1;
     grid-row: 2;
   }
+}
+
+.kasa-tables-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .tables-filter-bar {

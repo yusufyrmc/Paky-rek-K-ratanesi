@@ -1,6 +1,6 @@
-# Pakyürek Kıraathanesi - Garson ve Kasa Adisyon Sistemi Kullanım Kılavuzu
+# Pakyürek Kıraathanesi - Garson & Ocak Sipariş Sistemi Kullanım Kılavuzu
 
-Pakyürek Kıraathanesi için garsonların cep telefonlarından anında masa siparişi girebildiği ve siparişlerin doğrudan masa adisyonu ile kasa panelinde görüntülendiği otomasyon sistemi hazırlandı.
+Pakyürek Kıraathanesi için garsonların cep telefonlarından anında masa siparişi girebildiği, ocak başındaki bilgisayarda ise siparişlerin sesli çan uyarısıyla ve renkli sayaçlarla salisesinde görüntülendiği tam teşekküllü otomasyon sistemi hazırlandı.
 
 ---
 
@@ -15,7 +15,7 @@ Masaüstündeki proje klasöründe yer alan **`baslat.bat`** dosyasına çift t�
 ## 📱 Garsonlar Telefondan Nasıl Bağlanır?
 
 1. Garsonların telefonunun kahvehanenin **Wi-Fi ağına** bağlı olduğundan emin olun.
-2. Bilgisayar ekranındaki ana sayfada bulunan **"Garson QR Kod"** butonundaki QR Kodu telefon kamerasından okutun.
+2. Bilgisayar ekranındaki (Ana Sayfada veya Ocak ekranının sağ üstündeki **"Garson QR Kod"** butonunda) **QR Kodu** telefon kamerasından okutun.
 3. Garsonun telefonu otomatik olarak sipariş ekranına bağlanır (Herhangi bir uygulama indirmeye gerek yoktur).
 
 ---
