@@ -512,11 +512,6 @@ async function getSupabase(sql, params = []) {
     throwIf(error, 'esnaf');
     return coerceRow(data);
   }
-  if (/^SELECT \* FROM merchants WHERE name = \?$/i.test(s)) {
-    const { data, error } = await supabase.from('merchants').select('*').eq('name', params[0]).maybeSingle();
-    throwIf(error, 'esnaf adı');
-    return coerceRow(data);
-  }
   if (s.includes("SELECT COUNT(*) as count FROM orders WHERE table_id = ?") && (s.includes("status != 'completed'") || s.includes("status IN ('approved', 'preparing', 'ready')"))) {
     const { data, error } = await supabase.from('orders').select('id, status').eq('table_id', params[0]);
     throwIf(error, 'açık sipariş sayısı');

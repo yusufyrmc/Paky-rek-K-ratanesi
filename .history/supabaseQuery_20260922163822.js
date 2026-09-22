@@ -365,10 +365,10 @@ async function allSupabase(sql, params = []) {
     throwIf(error, 'sipariş kalemleri');
     return coerceRows(data);
   }
-  if (s.includes('SELECT * FROM orders') && s.includes('table_id = ?') && (s.includes("status != 'completed'") || s.includes("status IN ('approved', 'preparing', 'ready')"))) {
+  if (s.includes('SELECT * FROM orders') && s.includes('table_id = ?') && s.includes("status != 'completed'")) {
     const { data, error } = await supabase.from('orders').select('*').eq('table_id', params[0]);
     throwIf(error, 'masa siparişleri');
-    const rows = coerceRows(data).filter((o) => ['approved', 'preparing', 'ready'].includes(o.status));
+    const rows = coerceRows(data).filter((o) => o.status !== 'completed' && o.status !== 'cancelled');
     rows.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     return rows;
   }
@@ -512,15 +512,10 @@ async function getSupabase(sql, params = []) {
     throwIf(error, 'esnaf');
     return coerceRow(data);
   }
-  if (/^SELECT \* FROM merchants WHERE name = \?$/i.test(s)) {
-    const { data, error } = await supabase.from('merchants').select('*').eq('name', params[0]).maybeSingle();
-    throwIf(error, 'esnaf adı');
-    return coerceRow(data);
-  }
-  if (s.includes("SELECT COUNT(*) as count FROM orders WHERE table_id = ?") && (s.includes("status != 'completed'") || s.includes("status IN ('approved', 'preparing', 'ready')"))) {
+  if (s.includes("SELECT COUNT(*) as count FROM orders WHERE table_id = ?") && s.includes("status != 'completed'")) {
     const { data, error } = await supabase.from('orders').select('id, status').eq('table_id', params[0]);
     throwIf(error, 'açık sipariş sayısı');
-    const count = (data || []).filter((o) => ['approved', 'preparing', 'ready'].includes(o.status)).length;
+    const count = (data || []).filter((o) => o.status !== 'completed' && o.status !== 'cancelled').length;
     return { count };
   }
   if (s.includes('FROM payments') && s.includes("date(created_at) = date('now'")) {

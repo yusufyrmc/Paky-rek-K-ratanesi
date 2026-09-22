@@ -467,9 +467,6 @@ app.put('/api/orders/:id/status', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Geçersiz durum' });
     }
 
-    const previousOrder = await get('SELECT * FROM orders WHERE id = ?', [id]);
-    if (!previousOrder) return res.status(404).json({ success: false, error: 'Sipariş bulunamadı' });
-
     await run("UPDATE orders SET status = ?, updated_at = datetime('now', 'localtime') WHERE id = ?", [status, id]);
     
     // Kalemlerin durumunu da güncelle
@@ -479,29 +476,10 @@ app.put('/api/orders/:id/status', async (req, res) => {
     if (updatedOrder) {
       updatedOrder.items = await all('SELECT * FROM order_items WHERE order_id = ?', [id]);
 
-      const chargeableStatuses = ['approved', 'preparing', 'ready'];
-      const becomesChargeable = chargeableStatuses.includes(status);
-      const wasChargeable = chargeableStatuses.includes(previousOrder.status);
-      if (becomesChargeable && !wasChargeable && !previousOrder.charged_at) {
-        if (String(updatedOrder.table_name || '').startsWith('[Esnaf] ')) {
-          const merchantName = String(updatedOrder.table_name).slice('[Esnaf] '.length);
-          const merchant = await get('SELECT * FROM merchants WHERE name = ?', [merchantName]);
-          if (merchant) {
-            await run('UPDATE merchants SET balance = balance + ? WHERE id = ?', [updatedOrder.total_amount, merchant.id]);
-            await run(`
-              INSERT INTO merchant_transactions (merchant_id, type, amount, description, waiter_name, created_at)
-              VALUES (?, 'order', ?, ?, ?, datetime('now', 'localtime'))
-            `, [merchant.id, updatedOrder.total_amount, `Sipariş #${updatedOrder.id} - ${updatedOrder.items.map(item => `${item.quantity}x ${item.product_name}`).join(', ')}`, updatedOrder.waiter_name || 'Esnaf Paneli']);
-          }
-        }
-        await run("UPDATE orders SET charged_at = datetime('now', 'localtime') WHERE id = ?", [id]);
-        updatedOrder.charged_at = new Date().toISOString();
-      }
-
       // Eğer sipariş iptal edildiyse ve masada başka açık sipariş yoksa masayı 'empty' yap
       if (status === 'cancelled' && updatedOrder.table_id > 0) {
         const remainingOpen = await get(
-          "SELECT COUNT(*) as count FROM orders WHERE table_id = ? AND status IN ('approved', 'preparing', 'ready')",
+          "SELECT COUNT(*) as count FROM orders WHERE table_id = ? AND status != 'completed' AND status != 'cancelled'",
           [updatedOrder.table_id]
         );
         if (remainingOpen.count === 0) {
@@ -529,7 +507,7 @@ app.get('/api/tables/:id/orders', async (req, res) => {
 
     const orders = await all(`
       SELECT * FROM orders 
-      WHERE table_id = ? AND status IN ('approved', 'preparing', 'ready')
+      WHERE table_id = ? AND status != 'completed' AND status != 'cancelled'
       ORDER BY created_at ASC
     `, [id]);
 
@@ -537,7 +515,7 @@ app.get('/api/tables/:id/orders', async (req, res) => {
       order.items = await all('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
     }
 
-    const total = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+    const total = orders.reduce((sum, o) => sum + o.total_amount, 0);
 
     res.json({
       success: true,
