@@ -955,5 +955,95 @@ app.post('/api/merchants/:id/order', async (req, res) => {
       fullOrder.items = await all('SELECT * FROM order_items WHERE order_id = ?', [orderId]);
 
       io.emit('new_order', fullOrder);
-      io.emit('tables_changed');
     }
+
+    io.emit('merchants_changed');
+
+    const updatedMerchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    res.json({
+      success: true,
+      merchant: updatedMerchant,
+      orderTotal,
+      message: `${merchant.name} hesabına ${orderTotal.toFixed(2)} ₺ çetele işlendi.`
+    });
+  } catch (error) {
+    console.error('Esnaf çetele hatası:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Esnaftan Tahsilat Alma (Ödeme Alma)
+app.post('/api/merchants/:id/pay', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, payment_type, waiter_name, note } = req.body;
+
+    const payAmount = parseFloat(amount);
+    if (isNaN(payAmount) || payAmount <= 0) {
+      return res.status(400).json({ success: false, error: 'Geçerli bir ödeme tutarı girin' });
+    }
+
+    const merchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    if (!merchant) return res.status(404).json({ success: false, error: 'Esnaf bulunamadı' });
+
+    // Bakiyeden düş
+    await run('UPDATE merchants SET balance = balance - ? WHERE id = ?', [payAmount, id]);
+
+    // Hareketi kaydet
+    const desc = (note ? note + ' ' : '') + `(${payment_type === 'kart' ? 'Kredi Kartı' : 'Nakit'} Tahsilat)`;
+    await run(`
+      INSERT INTO merchant_transactions (merchant_id, type, amount, description, payment_type, waiter_name, created_at)
+      VALUES (?, 'payment', ?, ?, ?, ?, datetime('now', 'localtime'))
+    `, [id, payAmount, desc, payment_type || 'nakit', waiter_name || 'Kasa']);
+
+    // Kasaya / Ciroya dahil et (payments tablosuna ekle!)
+    await run(`
+      INSERT INTO payments (table_id, table_name, amount, payment_type, waiter_name, created_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    `, [0, `[Esnaf] ${merchant.name}`, payAmount, payment_type || 'nakit', waiter_name || 'Kasa']);
+
+    io.emit('merchants_changed');
+    io.emit('table_paid', { tableId: 0, tableName: `[Esnaf] ${merchant.name}`, amount: payAmount });
+
+    const updatedMerchant = await get('SELECT * FROM merchants WHERE id = ?', [id]);
+    res.json({
+      success: true,
+      merchant: updatedMerchant,
+      message: `${merchant.name} esnafından ${payAmount.toFixed(2)} ₺ tahsilat alındı.`
+    });
+  } catch (error) {
+    console.error('Esnaf tahsilat hatası:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ---------------- WEBSOCKET ----------------
+io.on('connection', (socket) => {
+  console.log(`[Socket] Yeni istemci bağlandı: ${socket.id}`);
+
+  socket.on('disconnect', () => {
+    console.log(`[Socket] İstemci ayrıldı: ${socket.id}`);
+  });
+});
+
+// ---------------- BAŞLATMA ----------------
+async function startServer() {
+  try {
+    await initDatabase();
+    server.listen(PORT, '0.0.0.0', () => {
+      const ip = getLocalIpAddress();
+      console.log('====================================================');
+      console.log('    PAKYÜREK KIRAATHANESİ SİPARİŞ SİSTEMİ ÇALIŞIYOR');
+      console.log('====================================================');
+      console.log(`-> Ocak PC Ekranı:        http://localhost:${PORT}/ocak.html`);
+      console.log(`-> Garson Mobil Linki:    http://${ip}:${PORT}/garson.html`);
+      console.log(`-> Kasa & Rapor Paneli:   http://localhost:${PORT}/kasa.html`);
+      console.log(`-> Ana Giriş / QR Sayfası: http://localhost:${PORT}/`);
+      console.log('====================================================');
+    });
+  } catch (err) {
+    console.error('Sunucu başlatılırken hata oluştu:', err);
+  }
+}
+
+startServer();
