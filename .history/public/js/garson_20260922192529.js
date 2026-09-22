@@ -485,17 +485,17 @@ function updateCartUI() {
   if (totalQty === 0) {
     cartCountText.textContent = 'Sepet Boş';
     cartTotalText.textContent = '0.00 ₺';
-    btnSend.innerHTML = `Adisyona Yaz ➜`;
+    btnSend.innerHTML = `Siparişi Gönder ➜`;
     btnSend.style.opacity = '0.6';
   } else {
     cartCountText.textContent = `${totalQty} Ürün (Detay için tıkla)`;
     cartTotalText.textContent = `${totalPrice.toFixed(2)} ₺`;
-    btnSend.innerHTML = `🚀 Adisyona Yaz (${totalQty})`;
+    btnSend.innerHTML = `🚀 Ocağa Gönder (${totalQty})`;
     btnSend.style.opacity = '1';
   }
 }
 
-// Hızlı Adisyona Yaz Butonu Tıklanması
+// Hızlı Ocağa Gönder Butonu Tıklanması
 function onFastSendClick() {
   if (!selectedTable) {
     showToast('Lütfen önce bir masa seçin!', 'warning');
