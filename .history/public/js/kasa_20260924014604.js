@@ -1053,8 +1053,6 @@ async function loadVeresiyeEntries() {
       return;
     }
 
-    kasaMerchantsData = merchantsData.data || [];
-
     const items = (merchantsData.data || []).filter(item => parseFloat(item.balance) > 0);
     const totalDebt = items.reduce((sum, item) => sum + (parseFloat(item.balance) || 0), 0);
 
