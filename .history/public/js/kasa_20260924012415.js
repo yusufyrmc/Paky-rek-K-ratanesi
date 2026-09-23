@@ -5,7 +5,6 @@ let selectedTable = null;
 let rawMenuData = [];
 let isRevenueHidden = localStorage.getItem('pakyurek_hide_revenue') === 'true';
 let latestDailySummary = { total: 0, nakit: 0, kart: 0, transaction_count: 0 };
-let selectedSplitCount = 2;
 
 function formatOrderStatus(status) {
   const labels = { approved: 'AÇIK', preparing: 'HAZIRLANIYOR', ready: 'HAZIR', completed: 'ÖDENDİ' };
@@ -113,32 +112,14 @@ async function loadTables() {
   }
 }
 
-function sortTablesForDisplay(tableList) {
-  return [...tableList].sort((a, b) => {
-    const sectionOrder = { 'İçerisi': 0, 'Içerisi': 0, 'Salon': 0, 'Bahçe': 1, 'Bahce': 1, 'Dışarısı': 2, 'Disarisi': 2, 'Dısarısı': 2 };
-    const sectionA = sectionOrder[String(a.section || '').trim()] ?? 99;
-    const sectionB = sectionOrder[String(b.section || '').trim()] ?? 99;
-
-    if (sectionA !== sectionB) return sectionA - sectionB;
-
-    const parseTableNumber = (name) => {
-      const match = String(name || '').match(/\d+/);
-      return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
-    };
-
-    return parseTableNumber(a.name) - parseTableNumber(b.name) || (Number(a.id) - Number(b.id));
-  });
-}
-
 function renderTablesGrid() {
   const container = document.getElementById('tablesGrid');
-  const orderedTables = sortTablesForDisplay(allTables);
-  const occupiedCount = orderedTables.filter(t => t.status === 'occupied' || t.current_total > 0).length;
-  document.getElementById('occupiedCountLabel').textContent = `Dolu Masalar: ${occupiedCount} / ${orderedTables.length}`;
+  const occupiedCount = allTables.filter(t => t.status === 'occupied' || t.current_total > 0).length;
+  document.getElementById('occupiedCountLabel').textContent = `Dolu Masalar: ${occupiedCount} / ${allTables.length}`;
   const mobileOccEl = document.getElementById('mobileOccupiedCount');
   if (mobileOccEl) mobileOccEl.textContent = occupiedCount;
 
-  container.innerHTML = orderedTables.map(t => {
+  container.innerHTML = allTables.map(t => {
     const isOccupied = t.status === 'occupied' || t.current_total > 0;
     const isSelected = selectedTable && selectedTable.id === t.id;
     const hasSpecial = t.is_special === 1 || (t.custom_tea_price != null && t.custom_tea_price > 0);
@@ -360,111 +341,6 @@ function closePartialPaymentModal() {
   document.getElementById('partialPaymentModal').classList.remove('active');
 }
 
-function distributeSplitAmounts(totalAmount, splitCount) {
-  const safeTotal = Number(totalAmount || 0);
-  const count = Math.max(1, Math.min(10, Number(splitCount) || 1));
-  const cents = Math.round((safeTotal + Number.EPSILON) * 100);
-  const base = Math.floor(cents / count);
-  const remainder = cents % count;
-  const amounts = [];
-
-  for (let i = 0; i < count; i += 1) {
-    const amountCents = base + (i < remainder ? 1 : 0);
-    amounts.push(amountCents / 100);
-  }
-
-  return amounts;
-}
-
-function renderSplitOptions() {
-  const grid = document.getElementById('splitOptionsGrid');
-  if (!grid) return;
-
-  grid.innerHTML = Array.from({ length: 10 }, (_, index) => index + 1).map((count) => `
-    <button
-      class="btn ${selectedSplitCount === count ? 'btn-success' : 'btn-outline'}"
-      style="padding: 10px 0; font-weight: 800; ${selectedSplitCount === count ? 'border-color: #10b981;' : '';}"
-      onclick="selectSplitCount(${count})">
-      ${count}
-    </button>
-  `).join('');
-}
-
-function selectSplitCount(count) {
-  selectedSplitCount = Math.max(1, Math.min(10, Number(count) || 1));
-  renderSplitOptions();
-
-  const total = Number(selectedTable?.current_total || 0);
-  const preview = document.getElementById('splitPreview');
-  if (!preview || !selectedTable) return;
-
-  const amounts = distributeSplitAmounts(total, selectedSplitCount);
-  preview.innerHTML = amounts.map((amount, index) => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(255,255,255,0.03);">
-      <span style="color: #fff; font-weight: 600;">${index + 1}. Bölüm</span>
-      <strong style="color: var(--primary);">${amount.toFixed(2)} ₺</strong>
-    </div>
-  `).join('');
-}
-
-function openSplitPaymentModal() {
-  if (!selectedTable) return;
-
-  const currentTotal = Number(selectedTable.current_total || 0);
-  document.getElementById('splitPaymentTableName').textContent = selectedTable.name;
-  document.getElementById('splitPaymentCurrentTotal').textContent = `${currentTotal.toFixed(2)} ₺`;
-  selectedSplitCount = 2;
-  renderSplitOptions();
-  selectSplitCount(selectedSplitCount);
-  document.getElementById('splitPaymentModal').classList.add('active');
-}
-
-function closeSplitPaymentModal() {
-  document.getElementById('splitPaymentModal').classList.remove('active');
-}
-
-async function submitSplitPayment() {
-  if (!selectedTable) return;
-
-  const totalAmount = Number(selectedTable.current_total || 0);
-  if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
-    showToast('Bölünecek açık hesap bulunmuyor.', 'warning');
-    return;
-  }
-
-  const paymentType = document.getElementById('splitPaymentType').value;
-  const splitAmounts = distributeSplitAmounts(totalAmount, selectedSplitCount);
-
-  try {
-    let paidTotal = 0;
-    for (let i = 0; i < splitAmounts.length; i += 1) {
-      const amount = Number(splitAmounts[i] || 0);
-      if (amount <= 0) continue;
-
-      const res = await fetch(`/api/tables/${selectedTable.id}/pay`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, payment_type: paymentType, waiter_name: 'Kasa' })
-      });
-
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Bölme tahsilatı başarısız oldu.');
-      }
-
-      paidTotal += amount;
-    }
-
-    closeSplitPaymentModal();
-    showToast(`✓ Hesap ${selectedSplitCount} parçaya bölündü. Toplam ${paidTotal.toFixed(2)} ₺ tahsil edildi.`, 'success');
-    await loadTables();
-    loadDailyReports();
-  } catch (err) {
-    console.error('Hesap bölme hatası:', err);
-    showToast(err.message || 'Hesap bölünürken hata oluştu', 'danger');
-  }
-}
-
 async function submitPartialPayment() {
   if (!selectedTable) return;
   const amount = Number(document.getElementById('partialPaymentAmount').value);
@@ -599,12 +475,9 @@ async function loadDailyReports() {
       if (!data.lastSevenBusinessDays || data.lastSevenBusinessDays.length === 0) {
         businessDaysContainer.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 20px;">İş günü verisi yok.</div>`;
       } else {
-        businessDaysContainer.innerHTML = data.lastSevenBusinessDays.map((day, index) => `
+        businessDaysContainer.innerHTML = data.lastSevenBusinessDays.map(day => `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(255,255,255,0.03);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 50%; background: rgba(59,130,246,0.18); color: #93c5fd; font-size: 0.72rem; font-weight: 800;">${index + 1}</span>
-              <span style="color: #fff; font-weight: 600;">${escapeHtml(day.label)}</span>
-            </div>
+            <span style="color: #fff; font-weight: 600;">${escapeHtml(day.label)}</span>
             <span style="color: var(--primary); font-weight: 800;">${Number(day.total || 0).toFixed(2)} ₺</span>
           </div>
         `).join('');

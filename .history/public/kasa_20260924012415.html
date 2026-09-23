@@ -105,9 +105,6 @@
             <button class="btn btn-info" style="padding: 14px 10px;" onclick="openPartialPaymentModal()">
               💳 TUTAR AL
             </button>
-            <button class="btn btn-outline" style="padding: 14px 10px; border-color: #a78bfa; color: #c4b5fd;" onclick="openSplitPaymentModal()">
-              🔀 HESABI BÖL
-            </button>
             <button class="btn btn-outline" style="padding: 14px 10px; border-color: #eab308; color: #eab308;" onclick="closeTableAccount('veresiye')">
               📝 VERESİYE
             </button>
@@ -227,32 +224,6 @@
         <option value="veresiye">📝 Veresiye</option>
       </select>
       <button class="btn btn-success" style="width: 100%; padding: 13px; font-weight: 800;" onclick="submitPartialPayment()">TAHSİLATI KAYDET</button>
-    </div>
-  </div>
-
-  <!-- Hesabı bölme modalı -->
-  <div class="modal-overlay" id="splitPaymentModal">
-    <div class="modal-content" style="max-width: 520px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="color: var(--primary); margin: 0;">🔀 Hesabı Böl</h3>
-        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeSplitPaymentModal()">✕</button>
-      </div>
-      <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; margin-bottom: 14px;">
-        <div style="color: var(--text-secondary); font-size: 0.85rem;">Masa</div>
-        <strong id="splitPaymentTableName" style="color: #fff;">--</strong>
-        <div style="margin-top: 6px; color: var(--text-secondary); font-size: 0.85rem;">Toplam hesap</div>
-        <strong id="splitPaymentCurrentTotal" style="color: #f87171; font-size: 1.25rem;">0.00 ₺</strong>
-      </div>
-      <label for="splitPaymentType" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 6px;">Ödeme türü</label>
-      <select id="splitPaymentType" style="width: 100%; box-sizing: border-box; padding: 11px; margin-bottom: 14px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1rem;">
-        <option value="nakit">💵 Nakit</option>
-        <option value="kart">💳 Kart</option>
-        <option value="veresiye">📝 Veresiye</option>
-      </select>
-      <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">Kaça böleceksiniz?</div>
-      <div id="splitOptionsGrid" style="display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: 8px; margin-bottom: 14px;"></div>
-      <div id="splitPreview" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 4px; margin-bottom: 14px;"></div>
-      <button class="btn btn-success" style="width: 100%; padding: 13px; font-weight: 800;" onclick="submitSplitPayment()">BÖLÜM ÖDEMESİNİ KAYDET</button>
     </div>
   </div>
 

@@ -237,30 +237,6 @@ app.post('/api/tables/bulk-tea-price', async (req, res) => {
   }
 });
 
-async function resetTableToDefaultName(tableId) {
-  const table = await get('SELECT * FROM tables WHERE id = ?', [tableId]);
-  if (!table) return;
-
-  const section = String(table.section || '').trim();
-  const sectionLower = section.toLowerCase();
-  const sectionTables = await all(`
-    SELECT id, name, section
-    FROM tables
-    WHERE section = ?
-    ORDER BY id ASC
-  `, [section]);
-
-  const index = sectionTables.findIndex(item => Number(item.id) === Number(tableId));
-  let defaultName = 'Masa 1';
-  if (index >= 0) {
-    if (sectionLower.includes('bahçe') || sectionLower.includes('bahce')) defaultName = `Bahçe ${index + 1}`;
-    else if (sectionLower.includes('dışarısı') || sectionLower.includes('disarisi') || sectionLower.includes('dısarısı')) defaultName = `Dışarısı ${index + 1}`;
-    else defaultName = `Masa ${index + 1}`;
-  }
-
-  await run('UPDATE tables SET name = ? WHERE id = ?', [defaultName, tableId]);
-}
-
 // Masa Sil
 app.delete('/api/tables/:id', async (req, res) => {
   try {
@@ -643,7 +619,6 @@ app.post('/api/tables/:id/pay', async (req, res) => {
 
     if (remainingAmount <= 0.005) {
       await run("UPDATE tables SET status = 'empty' WHERE id = ?", [id]);
-      await resetTableToDefaultName(id);
     }
 
     io.emit('table_paid', { tableId: parseInt(id), tableName: table.name, amount: requestedAmount, remainingAmount });

@@ -237,6 +237,29 @@ app.post('/api/tables/bulk-tea-price', async (req, res) => {
   }
 });
 
+function getDefaultTableName(table) {
+  const section = String(table.section || '').trim();
+  const sectionLower = section.toLowerCase();
+
+  const inSectionTables = await all(`
+    SELECT id, name, section
+    FROM tables
+    WHERE section = ?
+    ORDER BY id ASC
+  `, [section]);
+
+  const index = inSectionTables.findIndex(item => Number(item.id) === Number(table.id));
+  if (index >= 0) {
+    if (sectionLower.includes('bahçe') || sectionLower.includes('bahce')) return `Bahçe ${index + 1}`;
+    if (sectionLower.includes('dışarısı') || sectionLower.includes('disarisi') || sectionLower.includes('dısarısı') || sectionLower.includes('disarisi')) return `Dışarısı ${index + 1}`;
+    return `Masa ${index + 1}`;
+  }
+
+  if (sectionLower.includes('bahçe') || sectionLower.includes('bahce')) return 'Bahçe 1';
+  if (sectionLower.includes('dışarısı') || sectionLower.includes('disarisi') || sectionLower.includes('dısarısı') || sectionLower.includes('disarisi')) return 'Dışarısı 1';
+  return 'Masa 1';
+}
+
 async function resetTableToDefaultName(tableId) {
   const table = await get('SELECT * FROM tables WHERE id = ?', [tableId]);
   if (!table) return;

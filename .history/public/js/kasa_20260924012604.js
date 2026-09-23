@@ -113,32 +113,14 @@ async function loadTables() {
   }
 }
 
-function sortTablesForDisplay(tableList) {
-  return [...tableList].sort((a, b) => {
-    const sectionOrder = { 'İçerisi': 0, 'Içerisi': 0, 'Salon': 0, 'Bahçe': 1, 'Bahce': 1, 'Dışarısı': 2, 'Disarisi': 2, 'Dısarısı': 2 };
-    const sectionA = sectionOrder[String(a.section || '').trim()] ?? 99;
-    const sectionB = sectionOrder[String(b.section || '').trim()] ?? 99;
-
-    if (sectionA !== sectionB) return sectionA - sectionB;
-
-    const parseTableNumber = (name) => {
-      const match = String(name || '').match(/\d+/);
-      return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
-    };
-
-    return parseTableNumber(a.name) - parseTableNumber(b.name) || (Number(a.id) - Number(b.id));
-  });
-}
-
 function renderTablesGrid() {
   const container = document.getElementById('tablesGrid');
-  const orderedTables = sortTablesForDisplay(allTables);
-  const occupiedCount = orderedTables.filter(t => t.status === 'occupied' || t.current_total > 0).length;
-  document.getElementById('occupiedCountLabel').textContent = `Dolu Masalar: ${occupiedCount} / ${orderedTables.length}`;
+  const occupiedCount = allTables.filter(t => t.status === 'occupied' || t.current_total > 0).length;
+  document.getElementById('occupiedCountLabel').textContent = `Dolu Masalar: ${occupiedCount} / ${allTables.length}`;
   const mobileOccEl = document.getElementById('mobileOccupiedCount');
   if (mobileOccEl) mobileOccEl.textContent = occupiedCount;
 
-  container.innerHTML = orderedTables.map(t => {
+  container.innerHTML = allTables.map(t => {
     const isOccupied = t.status === 'occupied' || t.current_total > 0;
     const isSelected = selectedTable && selectedTable.id === t.id;
     const hasSpecial = t.is_special === 1 || (t.custom_tea_price != null && t.custom_tea_price > 0);
