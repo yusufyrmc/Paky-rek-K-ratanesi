@@ -121,6 +121,7 @@ function sortTablesForDisplay(tableList) {
 
     if (sectionA !== sectionB) return sectionA - sectionB;
 
+    // Görünen masa adı değişse bile kart fiziksel masasının yerinde kalır.
     return Number(a.id) - Number(b.id);
   });
 }
