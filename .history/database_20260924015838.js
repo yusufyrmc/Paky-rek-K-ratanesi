@@ -79,25 +79,7 @@ async function initSqliteSchema() {
     await runSqlite("ALTER TABLE tables ADD COLUMN default_name TEXT");
   } catch (e) {}
 
-  const tablesWithoutDefaultName = await allSqlite(`
-    SELECT id, section
-    FROM tables
-    WHERE default_name IS NULL OR default_name = ''
-    ORDER BY section ASC, id ASC
-  `);
-  const sectionNumbers = new Map();
-  for (const table of tablesWithoutDefaultName) {
-    const section = String(table.section || '').trim();
-    const nextNumber = (sectionNumbers.get(section) || 0) + 1;
-    sectionNumbers.set(section, nextNumber);
-    const sectionLower = section.toLowerCase();
-    const prefix = sectionLower.includes('bahçe') || sectionLower.includes('bahce')
-      ? 'Bahçe'
-      : (sectionLower.includes('dışarısı') || sectionLower.includes('disarisi') || sectionLower.includes('dısarısı')
-        ? 'Dışarısı'
-        : 'Masa');
-    await runSqlite('UPDATE tables SET default_name = ? WHERE id = ?', [`${prefix} ${nextNumber}`, table.id]);
-  }
+  await runSqlite(`UPDATE tables SET default_name = name WHERE default_name IS NULL OR default_name = ''`);
 
   try {
     await runSqlite("ALTER TABLE tables ADD COLUMN custom_tea_price REAL DEFAULT NULL");
