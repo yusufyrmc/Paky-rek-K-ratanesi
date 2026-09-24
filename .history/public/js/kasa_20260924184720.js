@@ -1147,12 +1147,7 @@ function renderVeresiyeList(items, tableCredits = []) {
           <div style="font-weight: 800; color: #fff;">${escapeHtml(item.table_name || 'Masa')}</div>
           <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 3px;">${escapeHtml(item.waiter_name || 'Kasa')} · ${escapeHtml(new Date(item.created_at).toLocaleString('tr-TR'))}</div>
         </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="font-size: 1.2rem; font-weight: 800; color: #f87171;">${Number(item.amount || 0).toFixed(2)} ₺</div>
-          <button class="btn btn-outline" style="padding: 6px 10px; color: #fca5a5; border-color: rgba(239,68,68,0.5); font-size: 0.8rem;" onclick="deleteTableCredit(${item.id})" title="Masa veresiye kaydını sil">
-            🗑️ Sil
-          </button>
-        </div>
+        <div style="font-size: 1.2rem; font-weight: 800; color: #f87171;">${Number(item.amount || 0).toFixed(2)} ₺</div>
       </div>
     `).join('')}
   ` : '';
