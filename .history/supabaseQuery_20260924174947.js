@@ -613,7 +613,7 @@ async function getSupabase(sql, params = []) {
     const count = (data || []).filter((o) => ['approved', 'preparing', 'ready'].includes(o.status)).length;
     return { count };
   }
-  if (s.includes('FROM payments') && s.includes("date(created_at) = date('now'") && !s.includes("payment_type = 'veresiye'")) {
+  if (s.includes('FROM payments') && s.includes("date(created_at) = date('now'")) {
     const { start, end } = todayRangeIstanbul();
     const { data, error } = await supabase.from('payments').select('amount, payment_type').gte('created_at', start).lte('created_at', end);
     throwIf(error, 'günlük ciro');

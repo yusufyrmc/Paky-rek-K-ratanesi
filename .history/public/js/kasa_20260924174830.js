@@ -1053,9 +1053,7 @@ async function loadVeresiyeEntries() {
     kasaMerchantsData = merchantsData.data || [];
 
     const items = (merchantsData.data || []).filter(item => parseFloat(item.balance) > 0);
-    const tableCredits = creditData.tableCredits || [];
-    const merchantDebt = items.reduce((sum, item) => sum + (parseFloat(item.balance) || 0), 0);
-    const totalDebt = merchantDebt + Number(creditData.tableCreditTotal || 0);
+    const totalDebt = items.reduce((sum, item) => sum + (parseFloat(item.balance) || 0), 0);
 
     const totalDebtEl = document.getElementById('veresiyeTotalDebt');
     const totalCountEl = document.getElementById('veresiyeTotalCount');
@@ -1063,11 +1061,11 @@ async function loadVeresiyeEntries() {
     const todayPaymentsEl = document.getElementById('veresiyeTodayPayments');
 
     if (totalDebtEl) totalDebtEl.textContent = `${totalDebt.toFixed(2)} ₺`;
-    if (totalCountEl) totalCountEl.textContent = String(items.length + tableCredits.length);
-    if (todayOrdersEl) todayOrdersEl.textContent = `${(Number(summaryData.summary?.today_orders || 0) + Number(creditData.todayTableCredits || 0)).toFixed(2)} ₺`;
+    if (totalCountEl) totalCountEl.textContent = String(items.length);
+    if (todayOrdersEl) todayOrdersEl.textContent = `${Number(summaryData.summary?.today_orders || 0).toFixed(2)} ₺`;
     if (todayPaymentsEl) todayPaymentsEl.textContent = `${Number(summaryData.summary?.today_payments || 0).toFixed(2)} ₺`;
 
-    renderVeresiyeList(items, tableCredits);
+    renderVeresiyeList(items, creditData.tableCredits || []);
   } catch (err) {
     console.error('Veresiye verileri yüklenemedi:', err);
     if (listContainer) {
