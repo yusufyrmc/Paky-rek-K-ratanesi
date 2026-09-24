@@ -251,7 +251,6 @@ async function resetTableToDefaultName(tableId) {
   for (let index = 0; index < tables.length; index += 1) {
     const tableName = `Masa ${index + 1}`;
     await run('UPDATE tables SET name = ?, default_name = ? WHERE id = ?', [tableName, tableName, tables[index].id]);
-    await run('UPDATE orders SET table_name = ? WHERE table_id = ? AND status != \'completed\' AND status != \'cancelled\'', [tableName, tables[index].id]);
   }
 }
 

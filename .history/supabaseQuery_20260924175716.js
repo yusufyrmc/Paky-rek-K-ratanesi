@@ -295,9 +295,6 @@ async function runSupabase(sql, params = []) {
   if (/^UPDATE tables SET name = \? WHERE id = \?$/i.test(s)) {
     return sbUpdate('tables', { name: params[0] }, (q) => q.eq('id', params[1]));
   }
-  if (/^UPDATE tables SET name = \?, default_name = \? WHERE id = \?$/i.test(s)) {
-    return sbUpdate('tables', { name: params[0], default_name: params[1] }, (q) => q.eq('id', params[2]));
-  }
   if (s.includes('UPDATE tables') && s.includes('SET name =')) {
     const payload = { name: params[0], custom_tea_price: params[2] };
     if (params[1] != null) payload.section = params[1];
