@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Kasa & Yönetim Paneli - Pakyürek Kıraathanesi</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/kasa.css">
+</head>
+<body>
+
+  <!-- Kasa Üst Bar -->
+  <header class="kasa-header">
+    <div class="kasa-header-brand">
+      <h2 class="kasa-title">💼 PAKYÜREK KASA & YÖNETİM</h2>
+      <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981;">Online</span>
+    </div>
+
+    <div class="kasa-header-actions">
+      <button class="btn btn-outline" id="btnHeaderPrivacy" onclick="toggleRevenuePrivacy()" title="Ciro Rakamlarını Gizle / Göster">
+        <span id="headerPrivacyIcon">👁️</span> <span id="headerPrivacyText">Ciroyu Gizle</span>
+      </button>
+      <button class="btn btn-outline" style="color: #10b981; border-color: #10b981; font-weight: 700;" onclick="openCustomTeaPriceModal()" title="Masalara Özel Ürün Fiyatları ve İndirimli Masaları Yönet">
+        ⭐ Masalara Özel Fiyat Ayarları
+      </button>
+      <button class="btn btn-outline" onclick="openMenuManageModal()">
+        ☕ Menü & Fiyatları Düzenle
+      </button>
+      <button class="btn btn-outline" onclick="openAddTableModal()">
+        ➕ Yeni Masa Ekle
+      </button>
+      <button class="btn btn-outline" onclick="loadAllData()" title="Yenile">
+        🔄
+      </button>
+      <button class="btn btn-outline" onclick="openRecentOrdersModal()" title="Garsonların son siparişlerini göster">
+        🧾 Son Siparişler
+      </button>
+      <button class="btn btn-outline" style="color: #a78bfa; border-color: #a78bfa;" onclick="openManageWaitersModal()" title="Kasa Üzerinden Garson Ekle ve Sil">
+        👤 Garson Ekle / Sil
+      </button>
+      <button class="btn btn-outline" style="color: #38bdf8; border-color: #38bdf8;" onclick="openManageMerchantsModal()" title="Kasa Üzerinden Esnaf Ekle ve Sil">
+        🏬 Esnaf Ekle / Sil
+      </button>
+      <button class="btn btn-outline" style="color: #fbbf24; border-color: #fbbf24;" onclick="openVeresiyeModal()" title="Esnaf veresiye borçlarını göster">
+        🧾 Veresiyeler
+      </button>
+      <a href="esnaf.html" class="btn btn-outline" title="Esnaf & Çetele Paneli">
+        📋 Esnaf Paneli
+      </a>
+      <a href="index.html" class="btn btn-outline" title="Ana Menü">
+        🏠
+      </a>
+    </div>
+  </header>
+
+  <div class="kasa-container">
+
+    <!-- SOL BÖLÜM: MASALAR VE ADİSYON DETAYI -->
+    <div class="kasa-tables-section" id="kasaTablesSection">
+      
+      <div class="glass-panel kasa-tables-panel" id="kasaTablesPanel" style="padding: 16px;">
+        <div class="tables-filter-bar">
+          <span style="font-size: 0.85rem; color: var(--text-secondary);" id="occupiedCountLabel">Dolu Masalar: 0</span>
+        </div>
+
+        <div class="kasa-tables-grid" id="tablesGrid" style="margin-top: 14px;">
+          <!-- Dinamik Masalar -->
+        </div>
+      </div>
+
+      <!-- SEÇİLİ MASA ADİSYON KUTUSU -->
+      <div class="receipt-box" id="selectedTableBox">
+        <div class="receipt-head">
+          <div>
+            <h3 id="receiptTableName" style="font-size: 1.4rem; color: #fff;">Masa Seçiniz</h3>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);" id="receiptTableStatus">Detayları görmek için masaya tıklayın</span>
+          </div>
+
+          <div class="receipt-head-actions">
+            <button class="btn btn-outline" id="btnRenameTable" style="padding: 6px 12px; font-size: 0.85rem; display: none;" onclick="openRenameModal()">
+              ✏️ İsim/No Değiştir
+            </button>
+            <button class="btn btn-outline" id="btnTransferTable" style="padding: 6px 12px; font-size: 0.85rem; display: none;" onclick="openTransferModal()">
+              🔀 Masayı Aktar
+            </button>
+            <button class="btn btn-outline" id="btnDeleteTable" style="padding: 6px 12px; font-size: 0.85rem; display: none; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="deleteSelectedTable()">
+              🗑️ Masayı Sil
+            </button>
+          </div>
+        </div>
+
+        <div class="receipt-items" id="receiptItemsList">
+          <div style="text-align: center; color: var(--text-secondary); padding: 30px;">
+            Masaya tıklayarak açık adisyonu görebilir ve ödeme alabilirsiniz.
+          </div>
+        </div>
+
+        <div id="receiptActions" style="display: none; flex-direction: column; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+          <div class="stack-row">
+            <span style="font-size: 1.15rem; font-weight: 600;">Hesap Toplamı:</span>
+            <span style="font-size: 1.8rem; font-weight: 800; color: #ef4444;" id="receiptTotalAmount">0.00 ₺</span>
+          </div>
+
+          <div class="pay-actions-grid">
+            <button class="btn btn-success" style="padding: 14px 10px;" onclick="closeTableAccount('nakit')">
+              💵 NAKİT AL
+            </button>
+            <button class="btn btn-info" style="padding: 14px 10px;" onclick="openPartialPaymentModal()">
+              💳 TUTAR AL
+            </button>
+            <button class="btn btn-outline" style="padding: 14px 10px; border-color: #a78bfa; color: #c4b5fd;" onclick="openSplitPaymentModal()">
+              🔀 HESABI BÖL
+            </button>
+            <button class="btn btn-outline" style="padding: 14px 10px; border-color: #eab308; color: #eab308;" onclick="closeTableAccount('veresiye')">
+              📝 VERESİYE
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SAĞ BÖLÜM: GÜNLÜK RAPORLAR & İSTATİSTİKLER -->
+    <div class="kasa-reports-section" id="kasaReportsSection" style="display: flex; flex-direction: column; gap: 20px;">
+      
+      <!-- Ciro Özeti Kartları Başlık ve Gizlilik Butonu -->
+      <div class="stack-row" style="margin-bottom: 2px;">
+        <span style="font-weight: 700; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
+          📊 Günlük Kasa Raporu
+        </span>
+        <button class="btn btn-outline" id="btnToggleRevenuePrivacy" onclick="toggleRevenuePrivacy()" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+          <span id="privacyIcon">👁️</span> <span id="privacyText">Rakamları Gizle</span>
+        </button>
+      </div>
+
+      <!-- Ciro Özeti Kartları (Tıklayarak da açılıp kapanabilir) -->
+      <div class="stats-grid" id="statsGrid" onclick="toggleRevenuePrivacy()" style="cursor: pointer;" title="Tıklayarak ciroyu gizle / göster">
+        <div class="stat-card total-revenue">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="stat-label">💰 Bu İş Günü Toplam Ciro</span>
+            <span class="privacy-icon-indicator" style="font-size: 0.8rem; opacity: 0.7;">👁️</span>
+          </div>
+          <span class="stat-value" id="statTotalRev">0.00 ₺</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">💵 Nakit Ciro</span>
+          <span class="stat-value" id="statNakitRev">0.00 ₺</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">💳 Kredi Kartı Ciro</span>
+          <span class="stat-value" id="statKartRev">0.00 ₺</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">🧾 Tahsilat Adedi</span>
+          <span class="stat-value" id="statTxCount">0</span>
+        </div>
+      </div>
+
+      <!-- Son 7 İş Günü Ciro -->
+      <div class="glass-panel" style="padding: 20px;">
+        <h3 style="color: #fff; margin-bottom: 14px; font-size: 1.1rem;">
+          📅 Son 7 İş Günü Ciro
+        </h3>
+        <div id="lastSevenBusinessDaysList" style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="text-align: center; color: var(--text-secondary); padding: 20px;">İş günü verisi yükleniyor...</div>
+        </div>
+      </div>
+
+      <!-- En Çok Satanlar Listesi -->
+      <div class="glass-panel" style="padding: 20px;">
+        <h3 style="color: var(--primary); margin-bottom: 14px; font-size: 1.2rem;">
+          🏆 Bu İş Günü En Çok Satılan Ürünler
+        </h3>
+        <div class="ranking-list" id="topProductsList">
+          <!-- Dinamik En Çok Satanlar -->
+          <div style="text-align: center; color: var(--text-secondary); padding: 20px;">Bu iş gününde henüz satış kaydı yok.</div>
+        </div>
+      </div>
+
+      <!-- Son Ödemeler Geçmişi -->
+      <div class="glass-panel" style="padding: 20px;">
+        <h3 style="color: #fff; margin-bottom: 14px; font-size: 1.1rem;">
+          🕒 Son Tamamlanan Ödemeler
+        </h3>
+        <div style="max-height: 220px; overflow-y: auto;" id="recentPaymentsList">
+          <!-- Dinamik Son Ödemeler -->
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================= MODALLAR ================= -->
+
+  <!-- Son siparişler modalı -->
+  <div class="modal-overlay" id="recentOrdersModal">
+    <div class="modal-content" style="max-width: 680px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary); margin: 0;">🧾 Son Siparişler</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeRecentOrdersModal()">✕</button>
+      </div>
+      <div id="recentOrdersList" style="max-height: 65vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <div style="text-align: center; color: var(--text-secondary); padding: 24px;">Siparişler yükleniyor...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kısmi ödeme modalı -->
+  <div class="modal-overlay" id="partialPaymentModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary); margin: 0;">💳 Tutar Tahsil Et</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closePartialPaymentModal()">✕</button>
+      </div>
+      <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+        <div style="color: var(--text-secondary); font-size: 0.85rem;">Masa</div>
+        <strong id="partialPaymentTableName" style="color: #fff;">--</strong>
+        <div style="margin-top: 6px; color: var(--text-secondary); font-size: 0.85rem;">Mevcut hesap</div>
+        <strong id="partialPaymentCurrentTotal" style="color: #f87171; font-size: 1.25rem;">0.00 ₺</strong>
+      </div>
+      <label for="partialPaymentAmount" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 6px;">Alınacak tutar (₺)</label>
+      <input id="partialPaymentAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Örn: 5"
+        style="width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1.1rem;">
+      <label for="partialPaymentType" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 6px;">Ödeme türü</label>
+      <select id="partialPaymentType" style="width: 100%; box-sizing: border-box; padding: 11px; margin-bottom: 16px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1rem;">
+        <option value="nakit">💵 Nakit</option>
+        <option value="kart">💳 Kart</option>
+        <option value="veresiye">📝 Veresiye</option>
+      </select>
+      <button class="btn btn-success" style="width: 100%; padding: 13px; font-weight: 800;" onclick="submitPartialPayment()">TAHSİLATI KAYDET</button>
+    </div>
+  </div>
+
+  <!-- Hesabı bölme modalı -->
+  <div class="modal-overlay" id="splitPaymentModal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary); margin: 0;">🔀 Hesabı Böl</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeSplitPaymentModal()">✕</button>
+      </div>
+      <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+        <div style="color: var(--text-secondary); font-size: 0.85rem;">Masa</div>
+        <strong id="splitPaymentTableName" style="color: #fff;">--</strong>
+        <div style="margin-top: 6px; color: var(--text-secondary); font-size: 0.85rem;">Toplam hesap</div>
+        <strong id="splitPaymentCurrentTotal" style="color: #f87171; font-size: 1.25rem;">0.00 ₺</strong>
+      </div>
+      <label for="splitPaymentType" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 6px;">Ödeme türü</label>
+      <select id="splitPaymentType" style="width: 100%; box-sizing: border-box; padding: 11px; margin-bottom: 14px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1rem;">
+        <option value="nakit">💵 Nakit</option>
+        <option value="kart">💳 Kart</option>
+        <option value="veresiye">📝 Veresiye</option>
+      </select>
+      <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">Kaça böleceksiniz?</div>
+      <div id="splitOptionsGrid" style="display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: 8px; margin-bottom: 14px;"></div>
+      <div id="splitPreview" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 4px; margin-bottom: 14px;"></div>
+      <button class="btn btn-success" style="width: 100%; padding: 13px; font-weight: 800;" onclick="submitSplitPayment()">BÖLÜM ÖDEMESİNİ KAYDET</button>
+    </div>
+  </div>
+
+  <!-- Menü ve Fiyat Düzenleme Modalı -->
+  <div class="modal-overlay" id="menuManageModal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="color: var(--primary);">☕ Menü & Fiyat Yönetimi</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeMenuManageModal()">✕</button>
+      </div>
+
+      <!-- Yeni Ürün Ekleme Formu -->
+      <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; margin-bottom: 20px;">
+        <h4 style="color: #fff; margin-bottom: 10px; font-size: 0.95rem;">➕ Yeni Ürün Ekle</h4>
+        <div class="product-add-grid">
+          <input type="text" id="newProdName" placeholder="Ürün Adı (Örn: Ayran)" style="padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 4px; color: #fff;">
+          <input type="number" id="newProdPrice" placeholder="Fiyat ₺" style="padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 4px; color: #fff;">
+          <select id="newProdCat" style="padding: 8px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 4px; color: #fff;">
+            <!-- Dinamik Kategoriler -->
+          </select>
+          <button class="btn btn-success" style="padding: 8px 16px;" onclick="addNewProduct()">Ekle</button>
+        </div>
+      </div>
+
+      <!-- Mevcut Ürünler ve Fiyat Güncelleme -->
+      <div style="max-height: 400px; overflow-y: auto;" id="manageProductsList">
+        <!-- Dinamik Ürün Listesi -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Kolay Tuşlar (Hızlı Notlar / Seçenekler) Düzenleme Modalı -->
+  <div class="modal-overlay" id="productNotesModal" style="z-index: 1100;">
+    <div class="modal-content" style="max-width: 550px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div>
+          <h3 style="color: var(--primary); font-size: 1.25rem;">⚙️ Kolay Tuşları / Seçenekleri Ayarla</h3>
+          <div id="notesModalProdTitle" style="color: #fff; font-weight: 700; font-size: 1.1rem; margin-top: 2px;">Ürün Adı</div>
+        </div>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeProductNotesModal()">✕</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">
+        Garson sipariş alırken bu ürüne dokunduğunda açılacak hızlı butonları buradan belirleyebilirsiniz (Örn: Şekerli, Sade, Açık, Duble).
+      </p>
+
+      <!-- Mevcut Kolay Tuş Çipleri -->
+      <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 14px; border: 1px dashed var(--border-color);">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">
+          Mevcut Kolay Tuşlar (Silmek için ✕'e tıklayın):
+        </div>
+        <div id="notesChipsList" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; align-items: center;">
+          <!-- Dinamik Çipler -->
+        </div>
+      </div>
+
+      <!-- Yeni Kolay Tuş Ekle -->
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 6px;">Yeni Kolay Tuş Ekle:</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="newNoteInput" placeholder="Örn: Damla Sakızlı, Fincan, Bol Köpüklü..."
+            onkeydown="if(event.key==='Enter') addNewNoteToActiveProduct()"
+            style="flex: 1; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.95rem; outline: none;">
+          <button class="btn btn-primary" onclick="addNewNoteToActiveProduct()" style="padding: 10px 16px; font-weight: 700;">+ Ekle</button>
+        </div>
+      </div>
+
+      <!-- Hazır Şablon Önerileri -->
+      <div style="margin-bottom: 18px;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
+          Hazır Hızlı Seçenekler (Tıklayarak ekle):
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="notesQuickPresets">
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Sade')">+ Sade</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Az Şekerli')">+ Az Şekerli</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Orta')">+ Orta</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Şekerli')">+ Şekerli</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Açık')">+ Açık</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Koyu')">+ Koyu</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Duble')">+ Duble</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Limonlu')">+ Limonlu</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Çift Kaşar')">+ Çift Kaşar</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Acılı')">+ Acılı</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Soğuk')">+ Soğuk</button>
+          <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addPresetNote('Buzlu')">+ Buzlu</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-outline" style="flex: 1; padding: 12px;" onclick="closeProductNotesModal()">Kapat</button>
+        <button class="btn btn-success" style="flex: 1; padding: 12px; font-weight: 800;" onclick="saveActiveProductNotes()">✓ DEĞİŞİKLİKLERİ KAYDET</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Masa İsim / Numara / Özel Çay Fiyatı Düzenle Modalı -->
+  <div class="modal-overlay" id="renameModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary);">✏️ Masa Ayarlarını Düzenle</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeRenameModal()">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 6px;">Masa Adı veya Numarası (Örn: 5, Masa 5, Kral Masası, Köşe):</label>
+          <input type="text" id="renameTableInput" placeholder="Masa Adı / Numarası..." style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 1.1rem; font-weight: 700;">
+        </div>
+
+        <!-- Özel Fiyat Tarifesi Aç/Kapat -->
+        <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); padding: 12px; border-radius: 8px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="renameTableIsSpecial" style="width: 20px; height: 20px; accent-color: #10b981; cursor: pointer;">
+            <div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #34d399;">⭐ Bu Masaya Özel Fiyat Tarifesi Uygula</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                İşaretlendiğinde, menüde belirlediğiniz özel ürün fiyatları (çay, oralet, kahve vb.) bu masaya otomatik indirimli yazılır.
+              </div>
+            </div>
+          </label>
+          
+          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(16,185,129,0.2);">
+            <label style="display: block; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px;">
+              İsteğe Bağlı: Bu Masaya Özel Çay Fiyatı (₺) (Boş bırakılırsa ürün özel fiyatı geçerli):
+            </label>
+            <div style="display: flex; gap: 8px;">
+              <input type="number" id="renameTableTeaPriceInput" placeholder="Örn: 10 (İsteğe bağlı)" step="0.5" min="0"
+                style="flex: 1; padding: 8px 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.95rem; font-weight: 700;">
+              <button type="button" class="btn btn-outline" style="padding: 6px 12px; color: #10b981; border-color: #10b981; font-size: 0.85rem;" onclick="document.getElementById('renameTableTeaPriceInput').value = '10'; document.getElementById('renameTableIsSpecial').checked = true;">
+                10 ₺
+              </button>
+              <button type="button" class="btn btn-outline" style="padding: 6px 10px; color: var(--text-secondary); font-size: 0.8rem;" onclick="document.getElementById('renameTableTeaPriceInput').value = ''">
+                Temizle
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button class="btn btn-success" style="flex: 2; padding: 12px; font-weight: 700;" onclick="saveRenameTable()">💾 Ayarları Kaydet</button>
+          <button class="btn btn-danger" style="flex: 1; padding: 12px; font-weight: 700; background: rgba(239,68,68,0.18); border: 1px solid #ef4444; color: #ef4444;" onclick="deleteSelectedTable()">🗑️ Masayı Sil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Masa Ekle Modalı -->
+  <div class="modal-overlay" id="addTableModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary);">🪑 Yeni Masa Ekle</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeAddTableModal()">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 4px;">Masa Adı veya Numarası (Örn: 16, Masa 16, Bahçe 11, Loca):</label>
+          <input type="text" id="newTableName" placeholder="Masa Adı / Numarası..." style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 4px;">Bölüm:</label>
+          <select id="newTableSection" style="width: 100%; padding: 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+            <option value="İçerisi">🏠 İçerisi</option>
+            <option value="Bahçe">🌿 Bahçe</option>
+            <option value="Dışarısı">☀️ Dışarısı</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">☕ Özel Çay Fiyatı (İsteğe bağlı):</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" id="newTableTeaPrice" placeholder="Örn: 10 (Boşsa standart)" step="0.5" min="0" style="flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+            <button type="button" class="btn btn-outline" style="padding: 10px 14px; color: #10b981; border-color: #10b981; font-weight: 700;" onclick="document.getElementById('newTableTeaPrice').value = '10'">10 ₺</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 10px;" onclick="addNewTable()">Masayı Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Masa Taşı / Aktar Modalı -->
+  <div class="modal-overlay" id="transferModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="color: var(--primary);">🔀 Masa Taşı / Aktar</h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeTransferModal()">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <p style="color: var(--text-secondary);">
+          <strong id="transferFromTableName" style="color: #fff;">--</strong> masasının tüm siparişleri hangi masaya aktarılsın?
+        </p>
+        <select id="transferToTableSelect" style="padding: 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff;">
+          <!-- Hedef Masalar -->
+        </select>
+        <button class="btn btn-primary" style="margin-top: 10px;" onclick="confirmTransferTable()">Aktarımı Onayla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kasa Üzerinden Esnaf Yönetimi (Ekle & Sil) Modalı -->
+  <div class="modal-overlay" id="manageMerchantsModal">
+    <div class="modal-content" style="max-width: 740px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h3 style="color: #38bdf8; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <span>🏬</span> Esnaf Yönetimi (Ekle & Sil)
+        </h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeManageMerchantsModal()">✕</button>
+      </div>
+
+      <!-- Yeni Esnaf Ekleme Kartı -->
+      <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-color);">
+        <h4 style="color: #fff; margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+          <span>➕</span> Yeni Esnaf Ekle
+        </h4>
+        <div class="form-grid-3" style="margin-bottom: 10px;">
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Esnaf Adı / Dükkan İsmi *</label>
+            <input type="text" id="kasaNewMerchantName" placeholder="Örn: Berber Mehmet" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Sektör / Tür</label>
+            <select id="kasaNewMerchantType" style="width: 100%; padding: 8px 10px; background: #1e293b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+              <option value="Berber">✂️ Berber / Kuaför</option>
+              <option value="Terzi">🧵 Terzi</option>
+              <option value="Kasap">🥩 Kasap</option>
+              <option value="Manav">🍎 Manav</option>
+              <option value="Eczane">💊 Eczane</option>
+              <option value="Taksi">🚕 Taksici / Durak</option>
+              <option value="Kırtasiye">📚 Kırtasiye</option>
+              <option value="Büfe">🥪 Büfe / Bakkal</option>
+              <option value="Lokanta">🍲 Lokanta / Kebap</option>
+              <option value="Ayakkabıcı">👞 Ayakkabıcı</option>
+              <option value="Diğer" selected>🏬 Diğer Esnaf</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Açılış Bakiyesi (Borç ₺)</label>
+            <input type="number" id="kasaNewMerchantBalance" value="0" min="0" step="1" placeholder="0.00" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+        </div>
+
+        <div class="form-grid-phone">
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Telefon (İsteğe bağlı)</label>
+            <input type="text" id="kasaNewMerchantPhone" placeholder="05xx xxx xx xx" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Not / Adres (İsteğe bağlı)</label>
+            <input type="text" id="kasaNewMerchantNotes" placeholder="Köşedeki dükkan..." style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+          </div>
+          <button class="btn btn-success" style="padding: 9px 20px; font-weight: 700; white-space: nowrap;" onclick="kasaAddNewMerchant()">
+            💾 Esnafı Kaydet
+          </button>
+        </div>
+      </div>
+
+      <!-- Kayıtlı Esnaflar ve Silme Listesi -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-weight: 700; color: #fff; font-size: 0.95rem;" id="kasaMerchantCountLabel">
+          📋 Kayıtlı Esnaflar
+        </span>
+        <input type="text" id="kasaSearchMerchantInput" placeholder="İsimle ara..." oninput="kasaFilterMerchantsList()" style="padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.85rem; width: 180px;">
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; max-height: 380px; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;" id="kasaMerchantsList">
+        <!-- Dinamik Esnaf Satırları -->
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.8rem; color: var(--text-secondary);">⚠️ Esnaf silindiğinde geçmiş sipariş ve tahsilat kayıtları da silinir.</span>
+        <button class="btn btn-outline" onclick="closeManageMerchantsModal()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Veresiye Listesi Modalı -->
+  <div class="modal-overlay" id="veresiyeModal">
+    <div class="modal-content" style="max-width: 920px; max-height: 88vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h3 style="color: #fbbf24; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <span>🧾</span> Veresiyeler
+        </h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeVeresiyeModal()">✕</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px;">
+        <div class="glass-panel" style="padding: 12px; border-radius: 10px;">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Toplam Borç</div>
+          <div id="veresiyeTotalDebt" style="font-size: 1.2rem; font-weight: 800; color: #f87171; margin-top: 6px;">0.00 ₺</div>
+        </div>
+        <div class="glass-panel" style="padding: 12px; border-radius: 10px;">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Borçlu Esnaf</div>
+          <div id="veresiyeTotalCount" style="font-size: 1.2rem; font-weight: 800; color: #fff; margin-top: 6px;">0</div>
+        </div>
+        <div class="glass-panel" style="padding: 12px; border-radius: 10px;">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Bugün Verilen</div>
+          <div id="veresiyeTodayOrders" style="font-size: 1.2rem; font-weight: 800; color: #fbbf24; margin-top: 6px;">0.00 ₺</div>
+        </div>
+        <div class="glass-panel" style="padding: 12px; border-radius: 10px;">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Bugün Tahsilat</div>
+          <div id="veresiyeTodayPayments" style="font-size: 1.2rem; font-weight: 800; color: #34d399; margin-top: 6px;">0.00 ₺</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">📋 Esnaf ve Masa Veresiyeleri</span>
+        <input type="text" id="veresiyeSearchInput" placeholder="Esnaf veya masa ara..." oninput="filterVeresiyeList()" style="padding: 8px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.85rem; width: 220px;">
+      </div>
+
+      <div id="veresiyeList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+        <div style="text-align: center; color: var(--text-secondary); padding: 24px;">Veresiye verileri yükleniyor...</div>
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.8rem; color: var(--text-secondary);">ℹ️ Esnaf bakiyeleri ve masalarda veresiye kapatılan hesaplar birlikte gösterilir.</span>
+        <button class="btn btn-outline" onclick="closeVeresiyeModal()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kasa Üzerinden Garson Yönetimi (Ekle & Sil) Modalı -->
+  <div class="modal-overlay" id="manageWaitersModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h3 style="color: #a78bfa; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <span>👤</span> Garson Yönetimi (Ekle & Sil)
+        </h3>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeManageWaitersModal()">✕</button>
+      </div>
+
+      <!-- Yeni Garson Ekleme -->
+      <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-color);">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 6px;">➕ Yeni Garson Ekle:</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="kasaNewWaiterName" placeholder="Garson Adı (Örn: Caner, Ali, Barış)"
+            onkeydown="if(event.key === 'Enter') kasaAddNewWaiter()"
+            style="flex: 1; padding: 10px; font-size: 0.95rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; outline: none;">
+          <button class="btn btn-success" onclick="kasaAddNewWaiter()" style="padding: 10px 16px; font-weight: 700; white-space: nowrap;">+ Ekle</button>
+        </div>
+      </div>
+
+      <!-- Mevcut Garsonlar Listesi -->
+      <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; font-size: 0.95rem; color: #fff;" id="kasaWaitersCountLabel">📋 Kayıtlı Garsonlar</span>
+      </div>
+
+      <div id="kasaWaitersList" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; padding-right: 4px;">
+        <!-- Dinamik garson satırları -->
+      </div>
+
+      <button class="btn btn-outline" style="width: 100%; padding: 10px;" onclick="closeManageWaitersModal()">Kapat</button>
+    </div>
+  </div>
+
+  <!-- Masalara Özel Fiyat & Ürün Fiyatı Yönetim Modalı -->
+  <div class="modal-overlay" id="customTeaPriceModal">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <div>
+          <h3 style="color: #10b981; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.3rem;">
+            <span>⭐</span> Masalara Özel Fiyat Yönetimi
+          </h3>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+            Hangi ürüne ne kadar özel fiyat yazılacağını ve bu fiyatların hangi masalara uygulanacağını ayarlayın.
+          </div>
+        </div>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeCustomTeaPriceModal()">✕</button>
+      </div>
+
+      <!-- Sekme Butonları -->
+      <div style="display: flex; gap: 8px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+        <button type="button" class="btn btn-primary" id="tabBtnSpecialProducts" onclick="switchSpecialTab('products')" style="flex: 1; padding: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <span>☕</span> 1. Ürün Özel Fiyatları (Hangi Ürüne Kaç ₺?)
+        </button>
+        <button type="button" class="btn btn-outline" id="tabBtnSpecialTables" onclick="switchSpecialTab('tables')" style="flex: 1; padding: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <span>🌟</span> 2. Özel Fiyatlı Masalar (Kimlere Uygulanacak?)
+        </button>
+      </div>
+
+      <!-- 1. SEKME: ÜRÜN ÖZEL FİYATLARI -->
+      <div id="tabContentSpecialProducts" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+        <!-- Hızlı İşlem Araç Çubuğu -->
+        <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div style="font-size: 0.85rem; color: #fff;">
+            💡 <span style="color: #34d399; font-weight: 700;">Özel Fiyatlı Masalar</span> için ürünlere indirimli fiyat belirleyin. Boş bırakılan ürünler standart fiyattan yazılır.
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; color: #10b981; border-color: #10b981;" onclick="setQuickTeaSpecialPrices(10)">
+              ☕ Tüm Çayları 10 ₺ Yap
+            </button>
+            <button class="btn btn-success" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 800;" onclick="saveBulkSpecialPrices()">
+              💾 Fiyat Değişikliklerini Kaydet
+            </button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;">
+          <input type="text" id="specialProductSearch" placeholder="Ürün ara..." oninput="renderSpecialProductsList()" style="padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.85rem; width: 200px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary);" id="specialProductCountLabel">0 ürün listeleniyor</span>
+        </div>
+
+        <!-- Ürünler Listesi Tablosu -->
+        <div style="flex: 1; overflow-y: auto; max-height: 360px; padding-right: 4px; display: flex; flex-direction: column; gap: 6px;" id="specialProductsListContainer">
+          <!-- Dinamik Ürün Satırları -->
+        </div>
+      </div>
+
+      <!-- 2. SEKME: ÖZEL FİYATLI MASALAR -->
+      <div id="tabContentSpecialTables" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-success" style="padding: 6px 12px; font-size: 0.85rem; font-weight: 700;" onclick="applyBulkSpecialToSelected(true)">
+              ✓ Seçilenleri Özel Fiyatlı Yap
+            </button>
+            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem; color: #f87171; border-color: rgba(248,113,113,0.4);" onclick="applyBulkSpecialToSelected(false)">
+              ✕ Seçilenleri Standart Yap
+            </button>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="applyBulkSpecialToAll(true)">
+              ★ Tüm Masaları Özel Fiyatlı Yap
+            </button>
+          </div>
+        </div>
+
+        <!-- Masa Arama & Filtre -->
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="toggleAllTableCheckboxes(true)">Tümünü Seç</button>
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="toggleAllTableCheckboxes(false)">Seçimi Kaldır</button>
+            <button class="btn btn-outline" id="btnFilterOnlySpecialTea" style="padding: 4px 10px; font-size: 0.8rem; color: #10b981; border-color: #10b981;" onclick="toggleFilterOnlySpecialTea()">Sadece Özel Masalar</button>
+          </div>
+          <input type="text" id="teaPriceTableSearch" placeholder="Masa ara..." oninput="renderCustomTeaPriceList()" style="padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.85rem; width: 160px;">
+        </div>
+
+        <!-- Masalar Listesi -->
+        <div style="flex: 1; overflow-y: auto; max-height: 360px; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;" id="customTeaPriceTablesList">
+          <!-- Dinamik Masa Satırları -->
+        </div>
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.85rem; color: var(--text-secondary);" id="customTeaStatsLabel">Özel Fiyatlı Masa: 0 / 0</span>
+        <button class="btn btn-outline" onclick="closeCustomTeaPriceModal()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Bildirimleri -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/kasa.js"></script>
+</body>
+</html>
