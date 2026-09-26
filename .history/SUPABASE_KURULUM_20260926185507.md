@@ -35,7 +35,7 @@ Projeniz için tüm şemayı ve mevcut verilerinizi içeren hazır bir SQL dosya
 
 ### Günlük ciro ve veresiye hareketlerini etkinleştirme
 
-Kurulumdan sonra SQL Editor'de şu dosyayı çalıştırın. Daha önce çalıştırdıysanız 01:40 iş günü sınırının ve geçmiş ciroların güncellenmesi için yeniden çalıştırın:
+Kurulumdan sonra SQL Editor'de şu dosyayı da bir kez çalıştırın:
 📁 **[supabase_migration_daily_revenues.sql](file:///c:/Users/yusuf/OneDrive/Masaüstü/Pakyürek%20k%C4%B1ratanesi/supabase_migration_daily_revenues.sql)**
 
 Veresiye tabloları Supabase projesinde eksikse veya eski kurulum kullanılıyorsa şu dosyayı da çalıştırın:
@@ -47,7 +47,7 @@ Masa isimlerinin fiziksel masa numarasıyla karışmaması için:
 Bu migration:
 - `daily_revenues` tablosunu oluşturur ve her ödeme sonrası günlük ciroyu günceller.
 - İş günü sınırını kasa ile aynı şekilde `01:40` olarak kullanır.
-- Mevcut `payments` kayıtlarının iş gününü yeniden hesaplar ve geçmiş günlük özetleri günceller.
+- Mevcut `payments` kayıtlarından geçmiş günlük özetleri oluşturur.
 - Veresiyeleri yeni ve ayrı bir tabloda çoğaltmaz; `merchants` güncel bakiyeyi, `merchant_transactions` ise veresiye/tahsilat geçmişini tutmaya devam eder.
 
 ---

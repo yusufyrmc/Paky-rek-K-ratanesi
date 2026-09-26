@@ -75,11 +75,6 @@ FOR EACH ROW
 EXECUTE FUNCTION payments_refresh_daily_revenue_trigger();
 
 -- Mevcut ödeme geçmişinden günlük özetleri ilk kez oluştur.
-DELETE FROM daily_revenues d
-WHERE NOT EXISTS (
-  SELECT 1 FROM payments p WHERE p.business_date = d.business_date
-);
-
 INSERT INTO daily_revenues (business_date, total, nakit, kart, veresiye, transaction_count, updated_at)
 SELECT
   business_date,
